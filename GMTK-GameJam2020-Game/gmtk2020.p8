@@ -3,6 +3,7 @@ version 27
 __lua__
 --started by Theo N.
 --adding this to my own personal branch
+--I added this comment after I finished watching Hamilton
 
 --alex added this comment
 function _init()
