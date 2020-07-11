@@ -27,6 +27,7 @@ corr_seed_pos={x=15*8,y=15*8}
 -- corruption seed on the map
 corruption_range=1--tiles
 corruption_timer=0
+time_till_next_corruption = 2
 
 boundary_x =256
 boundary_y =256 
@@ -94,7 +95,7 @@ end
 function corrupt_dirt()
  corruption_timer+=delta_time
  --seconds till next corruption
- if corruption_timer>30 then
+ if corruption_timer>time_till_next_corruption then
   local x = corr_seed_pos.x/8
   local y = corr_seed_pos.y/8
   local offset_x=-corruption_range
@@ -148,7 +149,7 @@ speed=.3,
 sprite=0,
 direction="right",
 item="watering_pail",
-seed="pumpkin",
+seed="lettuce",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 dash_ready=false,
@@ -176,6 +177,7 @@ end,
 draw=function(self)
  self:animate()
  spr(self.sprite,self.x,self.y)
+ hitbox_collision(self.x+8,self.y,8,8)
 end,
 animate=function(self)
 
@@ -511,6 +513,8 @@ dead=false,
 update=function(self)
  if self.class == "pumpkin" then
   self:move_toward_target()
+ elseif self.class == "lettuce" then
+  self:stab_outwards()
  end
 end,
 draw=function(self)
@@ -524,7 +528,7 @@ draw=function(self)
   self.sprite=104
  elseif self.class == "melon" then
   self.sprite=108
- elseif self.class == "cabbage" then
+ elseif self.class == "lettuce" then
   self.sprite=106
  elseif self.class == "lemon" then
   self.sprite=132
@@ -542,6 +546,15 @@ move_toward_target=function(self)
 
 	 self.x+=self.dx*self.speed
 	 self.y+=self.dy*self.speed
+ end
+end,
+stab_outwards=function(self)
+ if distance(player.x+4,player.y+4,self.x+4,self.y+4) 
+ <= 15 then
+  --do animation and damage
+  --player if they're still
+  --within this distance
+  --at the end of the anim
  end
 end
 }
@@ -573,6 +586,23 @@ function collision(obj1,obj2)
 
   return hit
 end
+
+function hitbox_collision(px,py,hitbox_h,hitbox_w)
+ hitbox = {
+  x=px,
+  y=py,
+  h=hitbox_h,
+  w=hitbox_w
+ }
+ local colour = 1
+ for e in all(enemies) do
+  if collision(hitbox,e) then
+   colour = 3
+  end
+ end
+ rect(px,py,px+hitbox_w,py+hitbox_h,colour)
+end
+
 
 -->8
 --ui layer tab
