@@ -27,12 +27,12 @@ corr_seed_pos={x=15*8,y=15*8}
 -- corruption seed on the map
 corruption_range=16
 boundary_x =256
-boundary_y =256 
+boundary_y =256
 
 function _init()
  --test code
  --mset(corr_seed_pos.x/8,corr_seed_pos.y/8,132)
- create_enemy(75,55,"pumpkin",player)
+ --create_enemy(75,55,"pumpkin",player)
  -- ui layer
  ui_layer = make_ui()
 end
@@ -179,7 +179,7 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬆️
 	  if self.dash_ready then
-	   self.y-=8   
+	   self.y-=8
 	  end
 	 end
  end
@@ -381,8 +381,8 @@ draw = function(self)
 end,
 handle_growth=function(self)
  --if on wet soil
- if mget(self.x/8,self.y/8) 
-  == 70 or mget(self.x/8,self.y/8) 
+ if mget(self.x/8,self.y/8)
+  == 70 or mget(self.x/8,self.y/8)
   == 76 then --corrupted wet soil
 	 self.growth_timer+=delta_time
 	 if self.growth_timer >= plant_grow_time then
@@ -412,12 +412,12 @@ end,
 handle_harvest=function(self)
 	if collision(player,self) then
   player.harvested[self.class]+=1
-  del(plants,self)	
+  del(plants,self)
  end
 end,
 
 handle_corruption=function(self)
- if mget(self.x/8,self.y/8) 
+ if mget(self.x/8,self.y/8)
   == 76 or mget(self.x/8,self.y/8)
   == 77then --corrupted dirt
    self.corrupted=true
@@ -533,7 +533,7 @@ function make_ui()
    line(self.x+0,self.y+119,self.x+127,self.y+119,9)
 
    spr(68,self.x+106,self.y)  --gold
-   print("999",self.x+114,self.y+1,10) 
+   print("999",self.x+114,self.y+1,10)
 
    self.harvest:draw() -- crop icons
    print(player.hp.."/10",self.x+9,self.y+1,8) --health
