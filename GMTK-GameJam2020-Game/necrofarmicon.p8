@@ -1,8 +1,17 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
---game loops
 
+
+--scene control variable
+--current acceptable values of scene:
+--title
+--game
+--kill
+--shop
+scene="title"
+
+--game loops
 objects = {}
 plants = {}
 enemies = {}
@@ -15,25 +24,40 @@ delta_time = 1/30 --time since last frame
 function _init()
 
 end
+
 function _update()
- player:update()
- for b in all(plants) do
-  b:update()
+ if scene == "title" then
+  if (btnp(4)) scene="game"
  end
- for b in all(enemies) do
-  b:update()
+ if scene == "game" then
+  player:update()
+  for b in all(plants) do
+   b:update()
+  end
+  for b in all(enemies) do
+   b:update()
+  end
  end
 end
+
 function _draw()
- cls()
- map(0,0)
- for b in all(plants) do
-  b:draw()
+ if scene == "title" then
+  cls()
+  print("necrofarmicon",8,8,7)
+  print("v0.1 placeholder title screen",8,16,7)
+  print("press z to start",40,60,7)
  end
- for b in all(enemies) do
-  b:draw()
+ if scene=="game" then
+  cls()
+  map(0,0)
+  for b in all(plants) do
+   b:draw()
+  end
+  for b in all(enemies) do
+   b:draw()
+  end
+  player:draw()
  end
- player:draw()
 end
 
 --utility functions start here
@@ -43,7 +67,7 @@ function distance(x1, y1, x2, y2)
   return sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
 
---takes a copy of an object 
+--takes a copy of an object
 --and a table
 --returns the original's index
 --in the table
@@ -75,7 +99,7 @@ update=function(self)
  if btn(⬅️) then
   self.x-=self.speed
   self.direction="left"
- end 
+ end
  if btn(⬆️) then
   self.y-=self.speed
   self.direction="up"
@@ -108,7 +132,7 @@ use_tool=function(self)
 
  elseif self.tool=="shotgun" then
  end
-  
+
 end,
 plant_seed=function(self)
  local offset_x=0
@@ -189,7 +213,7 @@ animate=function(self)
 end,
 move_toward_target=function(self)
  if self.target != nil then
- 
+
  end
 end
 }
@@ -208,17 +232,17 @@ function collision(obj1,obj2)
   y2 = obj2.y
   w2 = obj2.w
   h2 = obj2.h
-  
+
   hit=false
   local xd=abs((x1+(w1/2))-(x2+(w2/2)))
   local xs=w1*0.5+w2*0.5
   local yd=abs((y1+(h1/2))-(y2+(h2/2)))
   local ys=h1/2+h2/2
-  if xd<xs and 
-     yd<ys then 
-    hit=true 
+  if xd<xs and
+     yd<ys then
+    hit=true
   end
-  
+
   return hit
 end
 
