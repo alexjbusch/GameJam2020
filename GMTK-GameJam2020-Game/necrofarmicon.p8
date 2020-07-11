@@ -23,9 +23,11 @@ delta_time = 1/60 --time since last frame
 --note that delta_time is 1/30
 --unless _update60, then 1/60
 corr_seed_pos={x=15*8,y=15*8}
--- the position of the
+-- the position in pixels of the
 -- corruption seed on the map
-corruption_range=16
+corruption_range=1--tiles
+corruption_timer=0
+
 boundary_x =256
 boundary_y =256 
 
@@ -61,6 +63,7 @@ function _update60()
    end
   end
  end
+ corrupt_dirt()
 end
 
 function _draw()
@@ -88,6 +91,27 @@ function _draw()
  end
 end
 
+function corrupt_dirt()
+ corruption_timer+=delta_time
+ if corruption_timer>1 then
+  local x = corr_seed_pos.x/8
+  local y = corr_seed_pos.y/8
+  local offset_x=-corruption_range
+  local offset_y=-corruption_range
+  while offset_x < corruption_range*2 do
+   while offset_y < corruption_range*2    do
+
+	    mset(x+offset_x,y+offset_y,77)
+
+	   offset_y+=1
+	  end
+	  offset_y=-corruption_range
+	  offset_x+=1
+  end
+  corruption_timer=0
+  corruption_range+=1
+ end
+end
 --utility functions start here
 
 --returns distance between 2 coords
@@ -123,7 +147,6 @@ item="watering_pail",
 seed="pumpkin",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
-anim_timer=0,
 dash_ready=false,
 dash_distance=16,
 dash_cooldown=0,--not implemented
