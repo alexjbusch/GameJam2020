@@ -120,8 +120,8 @@ speed=1.2,
 sprite=0,
 direction="right",
 item="watering_pail",
-seed="corn",
-harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
+seed="pumpkin",
+harvested={cabbage=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 anim_timer=0,
 dash_ready=false,
@@ -360,17 +360,23 @@ end,
 draw = function(self)
  if self.level == 1 then
   self.sprite=75 --sprout sprite
- end
- --mature plant sprites
- if self.class == "tomato" then
- 	if self.level==2 then
-   self.sprite = 78
-  end
- elseif self.class == "corn" then
-  if self.level==2 then
-   self.sprite = 94
-  end
- end
+ elseif self.level == 2 then
+	 if self.class == "tomato" then
+	  self.sprite=78
+	 elseif self.class == "corn" then
+	  self.sprite=94
+	 elseif self.class == "carrot" then
+	  self.sprite=97
+	 elseif self.class == "pumpkin" then
+	  self.sprite=95
+	 elseif self.class == "melon" then
+	  self.sprite=79
+	 elseif self.class == "cabbage" then
+	  self.sprite=96
+	 elseif self.class == "lemon" then
+	  self.sprite=112
+	 end
+	end
  spr(self.sprite,self.x,self.y)
 end,
 handle_growth=function(self)
@@ -453,8 +459,8 @@ draw=function(self)
   self.sprite=130
  elseif self.class == "pumpkin" then
   self.sprite=104
- elseif self.class == "watermelon" then
-  self.sprite=29
+ elseif self.class == "melon" then
+  self.sprite=108
  elseif self.class == "cabbage" then
   self.sprite=106
  elseif self.class == "lemon" then
