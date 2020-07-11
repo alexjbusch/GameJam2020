@@ -1,8 +1,17 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
---game loops
 
+
+--scene control variable
+--current acceptable values of scene:
+--title
+--game
+--kill
+--shop
+scene="title"
+
+--game loops
 objects = {}
 plants = {}
 enemies = {}
@@ -16,25 +25,46 @@ function _init()
  --test code
  create_enemy(75,55,"tomato",player)
 end
+
 function _update60()
- player:update()
- for b in all(plants) do
-  b:update()
+ if scene == "title" then
+  if (btnp(4)) scene="game"
  end
- for b in all(enemies) do
-  b:update()
+ if scene == "game" then
+  player:update()
+  for b in all(plants) do
+   b:update()
+  end
+  if scene == "game" then
+   player:update()
+   for b in all(plants) do
+    b:update()
+   end
+   for b in all(enemies) do
+    b:update()
+   end
+  end
  end
 end
+
 function _draw()
- cls()
- map(0,0)
- for b in all(plants) do
-  b:draw()
+ if scene == "title" then
+  cls()
+  print("necrofarmicon",8,8,7)
+  print("v0.1 placeholder title screen",8,16,7)
+  print("press z to start",40,60,7)
  end
- for b in all(enemies) do
-  b:draw()
+ if scene=="game" then
+  cls()
+  map(0,0)
+  for b in all(plants) do
+   b:draw()
+  end
+  for b in all(enemies) do
+   b:draw()
+  end
+  player:draw()
  end
- player:draw()
 end
 
 --utility functions start here
