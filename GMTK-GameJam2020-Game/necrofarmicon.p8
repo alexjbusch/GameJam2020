@@ -1,8 +1,6 @@
 pico-8 cartridge // http://www.pico-8.com
 version 27
 __lua__
-
-
 --scene control variable
 --current acceptable values of scene:
 --title
@@ -35,6 +33,7 @@ function _init()
  --create_enemy(75,55,"pumpkin",player)
  -- ui layer
  ui_layer = make_ui()
+
 end
 
 function _update60()
@@ -110,25 +109,65 @@ end
 --end utility functions
 -->8
 --player
+--animations
+function make_anim(s,sp)
+ local anim = {}
+ anim.t=0
+ anim.f=1
+ anim.s=s
+ anim.sp=sp
+
+ function anim:anim_update()
+  self.t=(self.t+1)%self.s
+  if (self.t==0) self.f=self.f%#self.sp+1
+  return self.sp[self.f]
+ end
+
+ return anim
+end
+
+player_idle_lr = make_anim(60,{4,5})
+player_idle_up = make_anim(60,{2,3})
+player_idle_dn = make_anim(60,{0,1})
+player_run_lr = make_anim(12,{20,21})
+player_run_up = make_anim(12,{18,19})
+player_run_dn = make_anim(12,{16,17})
+player_swing_lr = make_anim(10,{})
+player_swing_up = make_anim(10,{})
+player_swing_dn = make_anim(10,{})
+player_water_lr = make_anim(5,{})
+player_water_up = make_anim(5,{})
+player_water_dn = make_anim(5,{})
+player_shoot_lr = make_anim(10,{46,47})
+player_shoor_up = make_anim(10,{})
+player_shoor_dn = make_anim(10,{})
+player_dash_lr = make_anim(10,{40,41})
+player_dash_up = make_anim(10,{54,55})
+player_dash_dn = make_anim(10,{38,39})
+
 player = {
 x=64,
 y=64,
 w=8,
 h=8,
+fx=false,
+fy=false,
 hp=10,
-speed=1.2,
+speed=0.6,
 sprite=0,
 direction="right",
 item="watering_pail",
 seed="pumpkin",
-harvested={cabbage=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
+harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 anim_timer=0,
 dash_ready=false,
 register={0,0,0,0},
+cur_anim=player_idle_lr,
 update=function(self)
 
  self:handle_movement()
+ self.sprite=self.cur_anim:anim_update()
  if btn(❎) then
   self:plant_seed()
  end
@@ -143,13 +182,14 @@ update=function(self)
  end
 end,
 draw=function(self)
- self:animate()
- spr(self.sprite,self.x,self.y)
+ spr(self.sprite,self.x,self.y,1,1,self.fx,self.fy)
 end,
-animate=function(self)
-
-end,
+-- animate=function(self)
+--
+-- end,
 handle_movement=function(self)
+ self.direction="idle"
+ self.running=false
  if btn(➡️) then
 	  if self.x < boundary_x-8 then
 		  self.x+=self.speed
@@ -160,6 +200,8 @@ handle_movement=function(self)
 		   self.x+=8
 		  end
 	  end
+   self.cur_anim=player_run_lr
+   self.fx=false
  end
  if btn(⬅️) then
   if self.x > 0 then
@@ -171,6 +213,8 @@ handle_movement=function(self)
 	   self.x-=8
 	  end
 	 end
+  self.cur_anim=player_run_lr
+  self.fx = true
  end
  if btn(⬆️) then
   if self.y > 4 then
@@ -182,6 +226,7 @@ handle_movement=function(self)
 	   self.y-=8
 	  end
 	 end
+  self.cur_anim = player_run_up
  end
  if btn(⬇️) then
 	  if self.y < boundary_y-8 then
@@ -193,6 +238,19 @@ handle_movement=function(self)
 	   self.y+=8
 	  end
 	 end
+  self.cur_anim = player_run_dn
+ end
+ if self.last_key_pressed==⬇️ and self.running~=true then
+  self.cur_anim = player_idle_dn
+ end
+ if self.last_key_pressed==⬆️ and self.running~=true then
+  self.cur_anim = player_idle_up
+ end
+ if self.last_key_pressed==➡️ and self.running~=true then
+  self.cur_anim = player_idle_lr
+ end
+ if self.last_key_pressed==⬅️ and self.running~=true then
+  self.cur_anim = player_idle_lr
  end
 end,
 use_item=function(self)
@@ -307,6 +365,8 @@ function set_camera_offset()
  offset.y=offset.basey-offset.offy
  return {x=offset.x,y=offset.y}
 end
+
+
 -->8
 --plants
 function check_for_plant(xin,yin)
@@ -577,8 +637,26 @@ end
 
 -- abandoned for now
 function make_bar()
-
 end
+-->8
+-- animations tab
+function make_anim(s,sp)
+ local anim = {}
+ anim.t=0
+ anim.f=1
+ anim.s=s
+ anim.sp=sp
+ add(animations,anim)
+
+ function anim:anim_update()
+  self.t=(self.t+1)%self.s
+  if (self.t==0) self.f=self.f%#self.sp+1
+  return self.sp[self.f]
+ end
+
+ return anim
+end
+
 __gfx__
 00999900000000000099990000000000009999000000000000999900009999000000000000000000070000000000000000000070000000000070000000000000
 001ff1000099990000999900009999000091f10000999900001ff10000999900000cc000000ccc00060000000000000000000060000000000060000000007000
