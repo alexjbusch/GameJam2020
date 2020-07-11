@@ -178,6 +178,10 @@ draw=function(self)
  self:animate()
  spr(self.sprite,self.x,self.y)
  hitbox_collision(self.x+8,self.y,8,8)
+ hitbox_collision(self.x-8,self.y,8,8)
+ hitbox_collision(self.x,self.y+8,8,8)
+ hitbox_collision(self.x,self.y-8,8,8)
+
 end,
 animate=function(self)
 
@@ -262,7 +266,7 @@ handle_movement=function(self)
 end,
 use_item=function(self)
  if self.item=="sword" then
-  --swing code here
+  self:swing_sword()
  elseif self.item=="watering_pail" then
   self:water_ground()
  elseif self.item == "hoe" then
@@ -273,6 +277,17 @@ use_item=function(self)
  end
 
 end,
+
+swing_sword=function(self)
+ local enemy
+ if self.direction == "right" then
+  enemy = hitbox_collision(self.x+8,self.y,8,8)
+ elseif self.direction == "left" then
+  enemy = hitbox_collision(self.x,self.y,-8,8)
+ end
+end,
+
+
 plant_seed=function(self)
  local offset_x,offset_y = get_player_offset()
 
@@ -551,6 +566,7 @@ end,
 stab_outwards=function(self)
  if distance(player.x+4,player.y+4,self.x+4,self.y+4) 
  <= 15 then
+  player.hp-=1
   --do animation and damage
   --player if they're still
   --within this distance
@@ -579,6 +595,10 @@ function collision(obj1,obj2)
   local xs=w1*0.5+w2*0.5
   local yd=abs((y1+(h1/2))-(y2+(h2/2)))
   local ys=h1/2+h2/2
+  
+  --test code
+
+  --end test code
   if xd<xs and
      yd<ys then
     hit=true
@@ -597,10 +617,12 @@ function hitbox_collision(px,py,hitbox_h,hitbox_w)
  local colour = 1
  for e in all(enemies) do
   if collision(hitbox,e) then
-   colour = 3
+   colour = 7
+   --return e
   end
  end
- rect(px,py,px+hitbox_w,py+hitbox_h,colour)
+rect(px,py,px+hitbox_w,py+hitbox_h,colour)
+ --return nil
 end
 
 
