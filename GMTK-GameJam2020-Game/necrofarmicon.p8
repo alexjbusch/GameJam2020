@@ -116,16 +116,20 @@ y=64,
 w=8,
 h=8,
 hp=10,
-speed=1.2,
+speed=.6,
 sprite=0,
 direction="right",
 item="watering_pail",
 seed="pumpkin",
-harvested={cabbage=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
+harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 anim_timer=0,
 dash_ready=false,
+dash_distance=16,
+dash_cooldown=0,--not implemented
+keypress_timer=0,
 register={0,0,0,0},
+
 update=function(self)
 
  self:handle_movement()
@@ -150,6 +154,22 @@ animate=function(self)
 
 end,
 handle_movement=function(self)
+ --dash logic
+ if self.last_key_pressed!=nil then
+  self.keypress_timer+=delta_time
+  if not btn(⬅️) and 
+     not btn(➡️) and 
+     not btn(⬆️) and
+     not btn(⬇️) then
+    self.dash_ready=true
+  end
+ end
+ if self.keypress_timer > .7 then
+  self.last_key_pressed=nil
+  self.keypress_timer=0
+  self.dash_ready=false
+ end
+ --move keys
  if btn(➡️) then
 	  if self.x < boundary_x-8 then
 		  self.x+=self.speed
@@ -157,7 +177,11 @@ handle_movement=function(self)
 		  self.last_key_pressed=➡️
 		  self.running=true
 		  if self.dash_ready then
-		   self.x+=8
+		   if btn(self.last_key_pressed) then
+		    self.x+=self.dash_distance
+		    self.dash_ready=false
+		    self.last_button_pressed=nil
+		   end
 		  end
 	  end
  end
@@ -168,7 +192,11 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬅️
 	  if self.dash_ready then
-	   self.x-=8
+    if btn(self.last_key_pressed) then
+	    self.x-=self.dash_distance
+	    self.dash_ready=false
+		   self.last_button_pressed=nil
+	   end
 	  end
 	 end
  end
@@ -179,7 +207,11 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬆️
 	  if self.dash_ready then
-	   self.y-=8   
+    if btn(self.last_key_pressed) then	  
+	    self.y-=self.dash_distance  
+	    self.dash_ready=false
+		   self.last_button_pressed=nil
+	   end
 	  end
 	 end
  end
@@ -190,7 +222,11 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬇️
 	  if self.dash_ready then
-	   self.y+=8
+    if btn(self.last_key_pressed) then	  
+	    self.y+=self.dash_distance
+	    self.dash_ready=false
+		   self.last_button_pressed=nil
+	   end
 	  end
 	 end
  end
@@ -371,7 +407,7 @@ draw = function(self)
 	  self.sprite=95
 	 elseif self.class == "melon" then
 	  self.sprite=79
-	 elseif self.class == "cabbage" then
+	 elseif self.class == "lettuce" then
 	  self.sprite=96
 	 elseif self.class == "lemon" then
 	  self.sprite=112
