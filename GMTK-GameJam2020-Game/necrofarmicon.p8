@@ -17,15 +17,16 @@ plants = {}
 enemies = {}
 
 plant_grow_time=1 --seconds
-delta_time = 1/30 --time since last frame
+delta_time = 1/60 --time since last frame
 --note that delta_time is 1/30
 --unless _update60, then 1/60
 
 function _init()
-
+ --test code
+ create_enemy(75,55,"tomato",player)
 end
 
-function _update()
+function _update60()
  if scene == "title" then
   if (btnp(4)) scene="game"
  end
@@ -34,8 +35,14 @@ function _update()
   for b in all(plants) do
    b:update()
   end
-  for b in all(enemies) do
-   b:update()
+  if scene == "game" then
+   player:update()
+   for b in all(plants) do
+    b:update()
+   end
+   for b in all(enemies) do
+    b:update()
+   end
   end
  end
 end
@@ -78,6 +85,8 @@ function get_index(table,value)
    end
    return inverted_table[value]
 end
+
+--end utility functions
 -->8
 --player
 player = {
@@ -86,7 +95,7 @@ y=64,
 w=8,
 h=8,
 hp=10,
-speed=1,
+speed=1.2,
 sprite=0,
 direction="right",
 tool="sword",
@@ -146,21 +155,34 @@ plant_seed=function(self)
  elseif self.direction=="left" then
   offset_x=-self.w
  end
- create_plant(self.x+offset_x,self.y+offset_y,self.seed)
+ if not(check_for_plant(self.x+offset_x,self.y+offset_y)) then
+  create_plant(self.x+offset_x,self.y+offset_y,self.seed)
+ end
 end
 
 
 }
 -->8
 --plants
+function check_for_plant(xin,yin)
+--returns true if a plant is present at the grid-corrected position supplied
+--in the arguments
+--returns false if no plant yet present
+ for p in all(plants) do
+  if (p.x == xin-xin%8 and p.y == yin-yin%8) return true
+ end
+ return false
+end
+
 function create_plant(xin,yin,class_in)
-plant={
-x=xin,
-y=yin,
-class=class_in,
-sprite=10,
-level=0,
-growth_timer=0,
+local plant={
+ x=xin-xin%8, --aligns seeds to 8x8 grid
+ y=yin-yin%8, --aligns seeds to 8x8 grid
+ class=class_in,
+ sprite=10,
+ level=0,
+ growth_timer=0,
+
 update=function(self)
   self:handle_growth()
 end,
@@ -169,6 +191,7 @@ draw = function(self)
  if self.level == 1 then
   self.sprite=11
  end
+ --mature plant sprites
  if self.class == "tomato" then
  	if self.level==2 then
    self.sprite = 12
@@ -193,27 +216,42 @@ add(plants,plant)
 end
 -->8
 --enemies
-function create_enemy(xin,yin,class_in)
+function create_enemy(xin,yin,class_in,target_in)
 enemy = {
 x=xin,
 y=yin,
 class=class_in,
+target=target_in,
+sprite=13,
 w=8,
 h=8,
+dx=0,
+dy=0,
 hp=10,
+speed=.4,
 dead=false,
-target=nil,
 update=function(self)
+ self:move_toward_target()
 end,
 draw=function(self)
- spr(self.x,self.y,11)
+ if self.class == "tomato" then
+  self.sprite=13
+ elseif self.class == "corn" then
+  self.sprite=29
+ end
+ spr(self.sprite,self.x,self.y)
 end,
 animate=function(self)
- --sprite change code here
+ --animation code
 end,
 move_toward_target=function(self)
  if self.target != nil then
+ 	angle=atan2(self.x-self.target.x-4,self.y-self.target.y-4)
+  self.dx = -cos(angle)
+  self.dy = -sin(angle)
 
+	 self.x+=self.dx*self.speed
+	 self.y+=self.dy*self.speed
  end
 end
 }
