@@ -26,11 +26,13 @@ corr_seed_pos={x=15*8,y=15*8}
 -- the position of the
 -- corruption seed on the map
 corruption_range=16
+boundary_x =256
+boundary_y =256 
 
 function _init()
  --test code
  --mset(corr_seed_pos.x/8,corr_seed_pos.y/8,132)
- create_enemy(75,55,"carrot",player)
+ create_enemy(75,55,"pumpkin",player)
  -- ui layer
  ui_layer = make_ui()
 end
@@ -118,51 +120,15 @@ speed=1.2,
 sprite=0,
 direction="right",
 item="watering_pail",
-seed="corn",
-harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
+seed="pumpkin",
+harvested={cabbage=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 anim_timer=0,
 dash_ready=false,
 register={0,0,0,0},
 update=function(self)
 
- if btn(➡️) then
-  self.x+=self.speed
-  self.direction="right"
-  self.last_key_pressed=➡️
-  self.running=true
-  if self.dash_ready then
-   self.x+=8
-  end
- end
- if btn(⬅️) then
-  self.x-=self.speed
-  self.direction="left"
-  self.running=true
-  self.last_key_pressed=⬅️
-  if self.dash_ready then
-   self.x-=8
-  end
- end
- if btn(⬆️) then
-  self.y-=self.speed
-  self.direction="up"
-  self.running=true
-  self.last_key_pressed=⬆️
-  if self.dash_ready then
-   self.y-=8
-
-  end
- end
- if btn(⬇️) then
-  self.y+=self.speed
-  self.direction="down"
-  self.running=true
-  self.last_key_pressed=⬇️
-  if self.dash_ready then
-   self.y+=8
-  end
- end
+ self:handle_movement()
  if btn(❎) then
   self:plant_seed()
  end
@@ -182,6 +148,52 @@ draw=function(self)
 end,
 animate=function(self)
 
+end,
+handle_movement=function(self)
+ if btn(➡️) then
+	  if self.x < boundary_x-8 then
+		  self.x+=self.speed
+		  self.direction="right"
+		  self.last_key_pressed=➡️
+		  self.running=true
+		  if self.dash_ready then
+		   self.x+=8
+		  end
+	  end
+ end
+ if btn(⬅️) then
+  if self.x > 0 then
+	  self.x-=self.speed
+	  self.direction="left"
+	  self.running=true
+	  self.last_key_pressed=⬅️
+	  if self.dash_ready then
+	   self.x-=8
+	  end
+	 end
+ end
+ if btn(⬆️) then
+  if self.y > 4 then
+	  self.y-=self.speed
+	  self.direction="up"
+	  self.running=true
+	  self.last_key_pressed=⬆️
+	  if self.dash_ready then
+	   self.y-=8   
+	  end
+	 end
+ end
+ if btn(⬇️) then
+	  if self.y < boundary_y-8 then
+	  self.y+=self.speed
+	  self.direction="down"
+	  self.running=true
+	  self.last_key_pressed=⬇️
+	  if self.dash_ready then
+	   self.y+=8
+	  end
+	 end
+ end
 end,
 use_item=function(self)
  if self.item=="sword" then
@@ -348,23 +360,29 @@ end,
 draw = function(self)
  if self.level == 1 then
   self.sprite=75 --sprout sprite
- end
- --mature plant sprites
- if self.class == "tomato" then
- 	if self.level==2 then
-   self.sprite = 78
-  end
- elseif self.class == "corn" then
-  if self.level==2 then
-   self.sprite = 94
-  end
- end
+ elseif self.level == 2 then
+	 if self.class == "tomato" then
+	  self.sprite=78
+	 elseif self.class == "corn" then
+	  self.sprite=94
+	 elseif self.class == "carrot" then
+	  self.sprite=97
+	 elseif self.class == "pumpkin" then
+	  self.sprite=95
+	 elseif self.class == "melon" then
+	  self.sprite=79
+	 elseif self.class == "cabbage" then
+	  self.sprite=96
+	 elseif self.class == "lemon" then
+	  self.sprite=112
+	 end
+	end
  spr(self.sprite,self.x,self.y)
 end,
 handle_growth=function(self)
  --if on wet soil
- if mget(self.x/8,self.y/8)
-  == 70 or mget(self.x/8,self.y/8)
+ if mget(self.x/8,self.y/8) 
+  == 70 or mget(self.x/8,self.y/8) 
   == 76 then --corrupted wet soil
 	 self.growth_timer+=delta_time
 	 if self.growth_timer >= plant_grow_time then
@@ -394,15 +412,16 @@ end,
 handle_harvest=function(self)
 	if collision(player,self) then
   player.harvested[self.class]+=1
-  del(plants,self)
+  del(plants,self)	
  end
 end,
 
 handle_corruption=function(self)
- if mget(self.x/8,self.y/8)
+ if mget(self.x/8,self.y/8) 
   == 76 or mget(self.x/8,self.y/8)
   == 77then --corrupted dirt
    self.corrupted=true
+   create_enemy(self.x,self.y,self.class)
    del(plants,self)
  end
 end
@@ -440,8 +459,8 @@ draw=function(self)
   self.sprite=130
  elseif self.class == "pumpkin" then
   self.sprite=104
- elseif self.class == "watermelon" then
-  self.sprite=29
+ elseif self.class == "melon" then
+  self.sprite=108
  elseif self.class == "cabbage" then
   self.sprite=106
  elseif self.class == "lemon" then
@@ -493,8 +512,6 @@ function collision(obj1,obj2)
 end
 
 -->8
-
--->8
 --ui layer tab
 function make_ui()
  local u = {}
@@ -516,7 +533,7 @@ function make_ui()
    line(self.x+0,self.y+119,self.x+127,self.y+119,9)
 
    spr(68,self.x+106,self.y)  --gold
-   print("999",self.x+114,self.y+1,10)
+   print("999",self.x+114,self.y+1,10) 
 
    self.harvest:draw() -- crop icons
    print(player.hp.."/10",self.x+9,self.y+1,8) --health
@@ -552,8 +569,8 @@ function make_harvestUI(x,y)
   print(player.harvested.pumpkin,self.x+72,self.y+2,7)
   spr(79,self.x+80,self.y)
   print(player.harvested.melon,self.x+89,self.y+2,7)
-  spr(112,self.x+96,self.y)
-  print(player.harvested.lemon,self.x+105,self.y+2,7)
+  spr(113,self.x+96,self.y)
+  print(player.harvested.corn,self.x+105,self.y+2,7)
  end
  return h
 end
