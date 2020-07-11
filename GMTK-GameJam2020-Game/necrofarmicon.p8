@@ -8,14 +8,15 @@ plants = {}
 enemies = {}
 
 plant_grow_time=1 --seconds
-delta_time = 1/30 --time since last frame
+delta_time = 1/60 --time since last frame
 --note that delta_time is 1/30
 --unless _update60, then 1/60
 
 function _init()
-
+ --test code
+ create_enemy(75,55,"tomato",player)
 end
-function _update()
+function _update60()
  player:update()
  for b in all(plants) do
   b:update()
@@ -54,6 +55,8 @@ function get_index(table,value)
    end
    return inverted_table[value]
 end
+
+--end utility functions
 -->8
 --player
 player = {
@@ -62,7 +65,7 @@ y=64,
 w=8,
 h=8,
 hp=10,
-speed=1,
+speed=1.2,
 sprite=0,
 direction="right",
 tool="sword",
@@ -111,6 +114,8 @@ use_tool=function(self)
   
 end,
 plant_seed=function(self)
+ 
+ 
  local offset_x=0
  local offset_y=0
  if self.direction=="up" then
@@ -145,6 +150,7 @@ draw = function(self)
  if self.level == 1 then
   self.sprite=11
  end
+ --mature plant sprites
  if self.class == "tomato" then
  	if self.level==2 then
    self.sprite = 12
@@ -169,27 +175,42 @@ add(plants,plant)
 end
 -->8
 --enemies
-function create_enemy(xin,yin,class_in)
+function create_enemy(xin,yin,class_in,target_in)
 enemy = {
 x=xin,
 y=yin,
 class=class_in,
+target=target_in,
+sprite=13,
 w=8,
 h=8,
+dx=0,
+dy=0,
 hp=10,
+speed=.4,
 dead=false,
-target=nil,
 update=function(self)
+ self:move_toward_target()
 end,
 draw=function(self)
- spr(self.x,self.y,11)
+ if self.class == "tomato" then
+  self.sprite=13
+ elseif self.class == "corn" then
+  self.sprite=29
+ end
+ spr(self.sprite,self.x,self.y)
 end,
 animate=function(self)
- --sprite change code here
+ --animation code
 end,
 move_toward_target=function(self)
  if self.target != nil then
- 
+ 	angle=atan2(self.x-self.target.x-4,self.y-self.target.y-4)
+  self.dx = -cos(angle)
+  self.dy = -sin(angle)
+	 
+	 self.x+=self.dx*self.speed
+	 self.y+=self.dy*self.speed	
  end
 end
 }
