@@ -161,17 +161,8 @@ use_item=function(self)
 
 end,
 plant_seed=function(self)
- local offset_x=0
- local offset_y=0
- if self.direction=="up" then
-  offset_y=-self.h
- elseif self.direction=="down" then
-  offset_y=self.h
- elseif self.direction=="right" then
-  offset_x=self.w
- elseif self.direction=="left" then
-  offset_x=-self.w
- end
+ local offset_x,offset_y = get_player_offset()
+
  if not(check_for_plant(self.x+offset_x,self.y+offset_y)) then
    if mget((self.x+offset_x)/8,(self.y+offset_y)/8)
     ==70 --if planting on dry soil
@@ -184,17 +175,8 @@ plant_seed=function(self)
 end,
  
 water_ground=function(self)
- local offset_x=0
- local offset_y=0
- if self.direction=="up" then
-  offset_y=-self.h
- elseif self.direction=="down" then
-  offset_y=self.h
- elseif self.direction=="right" then
-  offset_x=self.w
- elseif self.direction=="left" then
-  offset_x=-self.w
- end
+
+ local offset_x,offset_y = get_player_offset()
  
  if mget((self.x+offset_x)/8,(self.y+offset_y)/8,70)
   ==71 then --if dry
@@ -202,6 +184,21 @@ water_ground=function(self)
  end
 end
 }
+
+function get_player_offset()
+  local offset_x=0
+ local offset_y=0
+ if player.direction=="up" then
+  offset_y=-player.h
+ elseif player.direction=="down" then
+  offset_y=player.h
+ elseif player.direction=="right" then
+  offset_x=player.w
+ elseif player.direction=="left" then
+  offset_x=-player.w
+ end
+ return offset_x,offset_y
+end
 -->8
 --plants
 function check_for_plant(xin,yin)
