@@ -15,6 +15,7 @@ scene="title"
 objects = {}
 plants = {}
 enemies = {}
+items = {}
 
 plant_grow_time=1 --seconds
 plant_death_time=5--seconds
@@ -24,6 +25,10 @@ delta_time = 1/60 --time since last frame
 
 function _init()
  --test code
+ create_item(120,5,"sword")
+ create_item(8,5,"watering_pail")
+ create_item(8,120,"hoe")
+ create_item(120,120,"pickaxe")
  create_enemy(75,55,"tomato",player)
 end
 
@@ -44,6 +49,9 @@ function _update60()
    for b in all(enemies) do
     b:update()
    end
+   for b in all(items) do
+    b:update()
+   end
   end
  end
 end
@@ -59,6 +67,9 @@ function _draw()
   cls()
   map(0,0)
   for b in all(plants) do
+   b:draw()
+  end
+  for b in all(items) do
    b:draw()
   end
   for b in all(enemies) do
@@ -99,7 +110,7 @@ hp=10,
 speed=1.2,
 sprite=0,
 direction="right",
-tool="watering_pail",
+item="watering_pail",
 seed="corn",
 update=function(self)
  if btn(➡️) then
@@ -122,7 +133,7 @@ update=function(self)
   self:plant_seed()
  end
  if btn(🅾️) then
-  self:use_tool()
+  self:use_item()
  end
  --collision logic here
  for b in all(enemies) do
@@ -138,14 +149,14 @@ end,
 animate=function(self)
  --sprite change logic here
 end,
-use_tool=function(self)
- if self.tool=="sword" then
+use_item=function(self)
+ if self.item=="sword" then
   --swing code here
- elseif self.tool=="watering_pail" then
+ elseif self.item=="watering_pail" then
   self:water_ground()
- elseif self.tool == "hoe" then
+ elseif self.item == "hoe" then
  
- elseif self.tool=="shotgun" then
+ elseif self.item=="shotgun" then
  end
 
 end,
@@ -345,6 +356,37 @@ function collision(obj1,obj2)
   return hit
 end
 
+-->8
+--items
+
+function create_item(xin,yin,class_in)
+	item = {
+	x=xin,
+	y=yin,
+	w=8,
+	h=8,
+	class=class_in,
+	sprite=8,
+	update=function(self)
+	 if collision(player,self) then
+	  player.item = self.class
+	 end
+	end,
+	draw=function(self)
+	 spr(self.sprite,self.x,self.y)
+	end
+	}
+	if item.class == "watering_pail" then
+	 item.sprite=8
+	elseif item.class == "sword" then
+	 item.sprite=25
+	elseif item.class == "hoe" then
+	 item.sprite=24
+	elseif item.class == "pickaxe" then
+	 item.sprite=9
+	end
+	add(items,item)	
+end
 __gfx__
 00999900000000000099990000000000009999000000000000999900009999000000000000000000070000000000000000000070000000000070000000000000
 001ff1000099990000999900009999000091f10000999900001ff1000099990000000000000ccc00060000000000000000000060000000000060000000007000
