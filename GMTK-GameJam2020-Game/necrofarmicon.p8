@@ -30,10 +30,6 @@ corruption_range=16
 function _init()
  --test code
  --mset(corr_seed_pos.x/8,corr_seed_pos.y/8,132)
- create_item(120,5,"sword")
- create_item(8,5,"watering_pail")
- create_item(8,120,"hoe")
- --create_item(120,120,"pickaxe")
  create_enemy(75,55,"carrot",player)
  -- ui layer
  ui_layer = make_ui()
@@ -129,7 +125,7 @@ anim_timer=0,
 dash_ready=false,
 register={0,0,0,0},
 update=function(self)
- 
+
  if btn(➡️) then
   self.x+=self.speed
   self.direction="right"
@@ -155,7 +151,7 @@ update=function(self)
   self.last_key_pressed=⬆️
   if self.dash_ready then
    self.y-=8
-   
+
   end
  end
  if btn(⬇️) then
@@ -367,8 +363,8 @@ draw = function(self)
 end,
 handle_growth=function(self)
  --if on wet soil
- if mget(self.x/8,self.y/8) 
-  == 70 or mget(self.x/8,self.y/8) 
+ if mget(self.x/8,self.y/8)
+  == 70 or mget(self.x/8,self.y/8)
   == 76 then --corrupted wet soil
 	 self.growth_timer+=delta_time
 	 if self.growth_timer >= plant_grow_time then
@@ -398,12 +394,12 @@ end,
 handle_harvest=function(self)
 	if collision(player,self) then
   player.harvested[self.class]+=1
-  del(plants,self)	
+  del(plants,self)
  end
 end,
 
 handle_corruption=function(self)
- if mget(self.x/8,self.y/8) 
+ if mget(self.x/8,self.y/8)
   == 76 or mget(self.x/8,self.y/8)
   == 77then --corrupted dirt
    self.corrupted=true
@@ -520,7 +516,7 @@ function make_ui()
    line(self.x+0,self.y+119,self.x+127,self.y+119,9)
 
    spr(68,self.x+106,self.y)  --gold
-   print("999",self.x+114,self.y+1,10) 
+   print("999",self.x+114,self.y+1,10)
 
    self.harvest:draw() -- crop icons
    print(player.hp.."/10",self.x+9,self.y+1,8) --health
@@ -556,8 +552,8 @@ function make_harvestUI(x,y)
   print(player.harvested.pumpkin,self.x+72,self.y+2,7)
   spr(79,self.x+80,self.y)
   print(player.harvested.melon,self.x+89,self.y+2,7)
-  spr(113,self.x+96,self.y)
-  print(player.harvested.corn,self.x+105,self.y+2,7)
+  spr(112,self.x+96,self.y)
+  print(player.harvested.lemon,self.x+105,self.y+2,7)
  end
  return h
 end
