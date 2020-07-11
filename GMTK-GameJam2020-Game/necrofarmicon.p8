@@ -44,7 +44,7 @@ function distance(x1, y1, x2, y2)
   return sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
 
---takes a copy of an object 
+--takes a copy of an object
 --and a table
 --returns the original's index
 --in the table
@@ -78,7 +78,7 @@ update=function(self)
  if btn(⬅️) then
   self.x-=self.speed
   self.direction="left"
- end 
+ end
  if btn(⬆️) then
   self.y-=self.speed
   self.direction="up"
@@ -111,11 +111,9 @@ use_tool=function(self)
 
  elseif self.tool=="shotgun" then
  end
-  
+
 end,
 plant_seed=function(self)
- 
- 
  local offset_x=0
  local offset_y=0
  if self.direction=="up" then
@@ -127,21 +125,34 @@ plant_seed=function(self)
  elseif self.direction=="left" then
   offset_x=-self.w
  end
- create_plant(self.x+offset_x,self.y+offset_y,self.seed)
+ if not(check_for_plant(self.x+offset_x,self.y+offset_y)) then
+  create_plant(self.x+offset_x,self.y+offset_y,self.seed)
+ end
 end
 
 
 }
 -->8
 --plants
+function check_for_plant(xin,yin)
+--returns true if a plant is present at the grid-corrected position supplied
+--in the arguments
+--returns false if no plant yet present
+ for p in all(plants) do
+  if (p.x == xin-xin%8 and p.y == yin-yin%8) return true
+ end
+ return false
+end
+
 function create_plant(xin,yin,class_in)
-plant={
-x=xin,
-y=yin,
-class=class_in,
-sprite=10,
-level=0,
-growth_timer=0,
+local plant={
+ x=xin-xin%8, --aligns seeds to 8x8 grid
+ y=yin-yin%8, --aligns seeds to 8x8 grid
+ class=class_in,
+ sprite=10,
+ level=0,
+ growth_timer=0,
+
 update=function(self)
   self:handle_growth()
 end,
@@ -208,9 +219,9 @@ move_toward_target=function(self)
  	angle=atan2(self.x-self.target.x-4,self.y-self.target.y-4)
   self.dx = -cos(angle)
   self.dy = -sin(angle)
-	 
+
 	 self.x+=self.dx*self.speed
-	 self.y+=self.dy*self.speed	
+	 self.y+=self.dy*self.speed
  end
 end
 }
@@ -229,17 +240,17 @@ function collision(obj1,obj2)
   y2 = obj2.y
   w2 = obj2.w
   h2 = obj2.h
-  
+
   hit=false
   local xd=abs((x1+(w1/2))-(x2+(w2/2)))
   local xs=w1*0.5+w2*0.5
   local yd=abs((y1+(h1/2))-(y2+(h2/2)))
   local ys=h1/2+h2/2
-  if xd<xs and 
-     yd<ys then 
-    hit=true 
+  if xd<xs and
+     yd<ys then
+    hit=true
   end
-  
+
   return hit
 end
 
