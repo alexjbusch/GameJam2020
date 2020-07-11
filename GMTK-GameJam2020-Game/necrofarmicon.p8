@@ -93,15 +93,19 @@ end
 
 function corrupt_dirt()
  corruption_timer+=delta_time
- if corruption_timer>1 then
+ --seconds till next corruption
+ if corruption_timer>30 then
   local x = corr_seed_pos.x/8
   local y = corr_seed_pos.y/8
   local offset_x=-corruption_range
   local offset_y=-corruption_range
-  while offset_x < corruption_range*2 do
-   while offset_y < corruption_range*2    do
-
-	    mset(x+offset_x,y+offset_y,77)
+  while offset_x < corruption_range+1 do
+   while offset_y < corruption_range+1 do
+    if mget(x+offset_x,y+offset_y) == 70 then
+     mset(x+offset_x,y+offset_y,76)
+    elseif mget(x+offset_x,y+offset_y) == 71 then
+     mset(x+offset_x,y+offset_y,77)
+    end
 
 	   offset_y+=1
 	  end
@@ -140,7 +144,7 @@ y=64,
 w=8,
 h=8,
 hp=10,
-speed=.6,
+speed=.3,
 sprite=0,
 direction="right",
 item="watering_pail",
