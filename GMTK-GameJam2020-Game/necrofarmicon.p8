@@ -17,7 +17,7 @@ plants = {}
 enemies = {}
 items = {}
 
-plant_grow_time=1 --seconds
+plant_grow_time=3 --seconds
 plant_death_time=5--seconds
 delta_time = 1/60 --time since last frame
 --note that delta_time is 1/30
@@ -117,7 +117,7 @@ speed=1.2,
 sprite=0,
 direction="right",
 item="watering_pail",
-seed="corn",
+seed="tomato",
 harvested={lettuce=99,carrot=0,tomato=99},
 update=function(self)
  if btn(➡️) then
@@ -301,6 +301,8 @@ local plant={
  x=xin-xin%8, --aligns seeds to 8x8 grid
  y=yin-yin%8, --aligns seeds to 8x8 grid
  class=class_in,
+ h=8,
+ w=8,
  sprite=74,--seed sprite
  level=0,
  growth_timer=0,
@@ -308,6 +310,7 @@ local plant={
 update=function(self)
  if not self.dead then
   self:handle_growth()
+  self:handle_harvest()
  end
 end,
 
@@ -351,6 +354,15 @@ handle_growth=function(self)
 	   self.dead=true
 	   self.sprite=91
 	  end
+	 end
+	end
+end,
+
+handle_harvest=function(self)
+ if self.level==2 then
+		if collision(player,self) then
+	  player.harvested[self.class]+=1
+	  del(plants,self)	
 	 end
 	end
 end
