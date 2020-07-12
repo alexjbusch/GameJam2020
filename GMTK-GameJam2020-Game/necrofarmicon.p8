@@ -38,6 +38,7 @@ boundary_y =256
  --test code
  --mset(corr_seed_pos.x/8,corr_seed_pos.y/8,132)
  scene="title"
+ cutscene=false
  player.hp=10
  --create_enemy(75,55,"pumpkin",player)
  for b in all(enemies) do
@@ -71,8 +72,9 @@ function _update60()
   if begin==false then
    title.y = title.y+0.1*sin(title.timer)
    title.timer+=0.0125
-   if (btnp(4)) then
+   if (btnp(4))or btnp(❎) then
     begin=true
+    cutscene=true
     title.timer=0
    end
   else
@@ -84,7 +86,7 @@ function _update60()
   end
  end
  if scene == "game" then
-  player:update()
+  --player:update()
   for b in all(plants) do
    b:update()
   end
@@ -92,7 +94,14 @@ function _update60()
    b:update()
   end
   if scene == "game" then
-   player:update()
+   if cutscene == false then
+    player:update()
+   else
+    if btnp(❎) then
+     cutscene=false
+    end
+   end
+   
    cam_offset=set_camera_offset()
    ui_layer:update()
    for b in all(plants) do
@@ -163,7 +172,13 @@ function _draw()
   end
   player:draw()
   ui_layer:draw()
+ if cutscene  then
+  print("press x to plant the chaos seed",player.x-60,player.y-23)
+ end
+  else
   --?player.shotgun_cooldown,player.x,player.y-8,0
+
+
  end
  if scene == "over" then
   if exploded then
@@ -401,8 +416,8 @@ player_dash_up = make_anim(2,{54,55})
 player_dash_dn = make_anim(2,{38,39})
 
 player = {
-x=64,
-y=64,
+x=120,
+y=100,
 w=8,
 h=8,
 fx=false,
@@ -411,9 +426,9 @@ width=1,
 hp=1,
 speed=0.6,
 sprite=0,
-direction="right",
-item="sword",
-seed="carrot",
+direction="down",
+item="shotgun",
+seed="lettuce",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 dashing=false,
