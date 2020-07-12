@@ -174,11 +174,11 @@ swing_smear_lr = make_anim(10,{196,15,15,15})
 swing_smear_up = make_anim(10,{196,12,12})
 swing_smear_dn = make_anim(10,{196,26,26})
 player_water_lr = make_anim(10,{34,50})
-player_water_up = make_anim(10,{32,33})
-player_water_dn = make_anim(10,{48,49})
-player_shoot_lr = make_anim(10,{46,47})
-player_shoot_up = make_anim(10,{44,45})
-player_shoot_dn = make_anim(10,{60,61})
+player_water_up = make_anim(10,{48,49})
+player_water_dn = make_anim(10,{32,33})
+player_shoot_lr = make_anim(15,{46,46,47})
+player_shoot_up = make_anim(15,{60,60,61})
+player_shoot_dn = make_anim(15,{44,44,45})
 player_dash_lr = make_anim(10,{40,41})
 player_dash_up = make_anim(10,{54,55})
 player_dash_dn = make_anim(10,{38,39})
@@ -190,11 +190,12 @@ w=8,
 h=8,
 fx=false,
 fy=false,
+width=1,
 hp=10,
 speed=0.6,
 sprite=0,
 direction="right",
-item="sword",
+item="watering_pail",
 seed="pumpkin",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
@@ -206,12 +207,17 @@ register={0,0,0,0},
 cur_moveanim=player_idle_lr,
 attack={sprite=196,anim=nil,x=nil,y=nil,w=1,h=1},
 anim_locked=false,
+pail_left_flag=false,
 update=function(self)
  if self.cur_moveanim.done then
   self.anim_locked = false
   self.attack.anim = nil
   self.attack.w=1
   self.attack.h=1
+  self.width=1
+  if (self.pail_left_flag) then
+   self.pail_left_flag=false
+  end
   self:idle_check()
  end
  if btn(❎) then
@@ -250,7 +256,43 @@ update=function(self)
      self.attack.x=self.x-4
      self.attack.y=self.y+8
      self.attack.w = 2
+     self.width=1
      self.anim_locked=true
+   end
+  end
+  if self.item=="shotgun" then
+   if self.direction=="right" or self.direction=="left" then
+    self.cur_moveanim = player_shoot_lr
+    self.anim_locked=true
+   end
+   if self.direction=="up" then
+    self.cur_moveanim = player_shoot_up
+    self.anim_locked=true
+   end
+   if self.direction=="down" then
+    self.cur_moveanim = player_shoot_dn
+    self.anim_locked=true
+   end
+  end
+  if self.item=="watering_pail" then
+   if self.direction=="right" then
+    self.cur_moveanim = player_water_lr
+    self.width=2
+    self.anim_locked=true
+   end
+   if self.direction=="left" then
+    self.cur_moveanim = player_water_lr
+    self.width=2
+    self.pail_left_flag=true
+    self.anim_locked=true
+   end
+   if self.direction=="up" then
+    self.cur_moveanim = player_water_up
+    self.anim_locked=true
+   end
+   if self.direction=="down" then
+    self.cur_moveanim = player_water_dn
+    self.anim_locked=true
    end
   end
  end
@@ -265,7 +307,11 @@ update=function(self)
  if (self.attack.anim~=nil) self.attack.sprite=self.attack.anim:anim_update()
 end,
 draw=function(self)
- spr(self.sprite,self.x,self.y,1,1,self.fx,self.fy)
+ if self.pail_left_flag then
+  spr(self.sprite,self.x-8,self.y,self.width,1,self.fx,self.fy)
+ else
+  spr(self.sprite,self.x,self.y,self.width,1,self.fx,self.fy)
+ end
  if self.attack.anim~=nil then
   spr(self.attack.sprite,self.attack.x,self.attack.y,self.attack.w,self.attack.h,self.fx,self.fy)
  end
@@ -780,6 +826,7 @@ function make_ui()
    rectfill(self.x+2,self.y+13,self.x+11,self.y+22,0)
    if (player.item == "sword") spr(25,self.x+3,self.y+14)
    if (player.item == "watering_pail") spr(8,self.x+3,self.y+14)
+   if (player.item == "shotgun") spr(24,self.x+3,self.y+14)
   end
  end
  return u
