@@ -21,9 +21,12 @@ delta_time = 1/60 --time since last frame
 --note that delta_time is 1/30
 --unless _update60, then 1/60
 corr_seed_pos={x=15*8,y=15*8}
--- the position of the
+-- the position in pixels of the
 -- corruption seed on the map
-corruption_range=16
+corruption_range=1--tiles
+corruption_timer=0
+time_till_next_corruption = 2
+
 boundary_x =256
 boundary_y =256
 
@@ -60,6 +63,7 @@ function _update60()
    end
   end
  end
+ corrupt_dirt()
 end
 
 function _draw()
@@ -87,6 +91,31 @@ function _draw()
  end
 end
 
+function corrupt_dirt()
+ corruption_timer+=delta_time
+ --seconds till next corruption
+ if corruption_timer>time_till_next_corruption then
+  local x = corr_seed_pos.x/8
+  local y = corr_seed_pos.y/8
+  local offset_x=-corruption_range
+  local offset_y=-corruption_range
+  while offset_x < corruption_range+1 do
+   while offset_y < corruption_range+1 do
+    if mget(x+offset_x,y+offset_y) == 70 then
+     mset(x+offset_x,y+offset_y,76)
+    elseif mget(x+offset_x,y+offset_y) == 71 then
+     mset(x+offset_x,y+offset_y,77)
+    end
+
+	   offset_y+=1
+	  end
+	  offset_y=-corruption_range
+	  offset_x+=1
+  end
+  corruption_timer=0
+  corruption_range+=1
+ end
+end
 --utility functions start here
 
 --returns distance between 2 coords
@@ -160,8 +189,10 @@ item="watering_pail",
 seed="pumpkin",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
-anim_timer=0,
 dash_ready=false,
+dash_distance=16,
+dash_cooldown=0,--not implemented
+keypress_timer=0,
 register={0,0,0,0},
 cur_moveanim=player_idle_lr,
 cur_actionanim=nil,
@@ -184,6 +215,12 @@ update=function(self)
 end,
 draw=function(self)
  spr(self.sprite,self.x,self.y,1,1,self.fx,self.fy)
+ hitbox_collision(self.x+8,self.y,8,8)
+ hitbox_collision(self.x-8,self.y,8,8)
+ hitbox_collision(self.x,self.y+8,8,8)
+ hitbox_collision(self.x,self.y-8,8,8)
+
+end,
 end,
 -- animate=function(self)
 --
@@ -191,6 +228,21 @@ end,
 handle_movement=function(self)
  self.direction="idle"
  self.running=false
+ if self.last_key_pressed!=nil then
+  self.keypress_timer+=delta_time
+  if not btn(⬅️) and 
+     not btn(➡️) and 
+     not btn(⬆️) and
+     not btn(⬇️) then
+    self.dash_ready=true
+  end
+ end
+ if self.keypress_timer > .7 then
+  self.last_key_pressed=nil
+  self.keypress_timer=0
+  self.dash_ready=false
+ end
+ --move keys
  if btn(➡️) then
 	  if self.x < boundary_x-8 then
 		  self.x+=self.speed
@@ -198,7 +250,11 @@ handle_movement=function(self)
 		  self.last_key_pressed=➡️
 		  self.running=true
 		  if self.dash_ready then
-		   self.x+=8
+		   if btn(self.last_key_pressed) then
+		    self.x+=self.dash_distance
+		    self.dash_ready=false
+		    self.last_button_pressed=nil
+		   end
 		  end
 	  end
    self.cur_anim=player_run_lr
@@ -211,7 +267,11 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬅️
 	  if self.dash_ready then
-	   self.x-=8
+    if btn(self.last_key_pressed) then
+	    self.x-=self.dash_distance
+	    self.dash_ready=false
+		   self.last_button_pressed=nil
+	   end
 	  end
 	 end
   self.cur_anim=player_run_lr
@@ -224,7 +284,11 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬆️
 	  if self.dash_ready then
-	   self.y-=8
+    if btn(self.last_key_pressed) then	  
+	    self.y-=self.dash_distance  
+	    self.dash_ready=false
+		   self.last_button_pressed=nil
+	   end
 	  end
 	 end
   self.cur_anim = player_run_up
@@ -236,7 +300,11 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬇️
 	  if self.dash_ready then
-	   self.y+=8
+    if btn(self.last_key_pressed) then	  
+	    self.y+=self.dash_distance
+	    self.dash_ready=false
+		   self.last_button_pressed=nil
+	   end
 	  end
 	 end
   self.cur_anim = player_run_dn
@@ -256,7 +324,7 @@ handle_movement=function(self)
 end,
 use_item=function(self)
  if self.item=="sword" then
-  --swing code here
+  self:swing_sword()
  elseif self.item=="watering_pail" then
   self:water_ground()
  elseif self.item == "hoe" then
@@ -267,6 +335,17 @@ use_item=function(self)
  end
 
 end,
+
+swing_sword=function(self)
+ local enemy
+ if self.direction == "right" then
+  enemy = hitbox_collision(self.x+8,self.y,8,8)
+ elseif self.direction == "left" then
+  enemy = hitbox_collision(self.x,self.y,-8,8)
+ end
+end,
+
+
 plant_seed=function(self)
  local offset_x,offset_y = get_player_offset()
 
@@ -432,7 +511,7 @@ draw = function(self)
 	  self.sprite=95
 	 elseif self.class == "melon" then
 	  self.sprite=79
-	 elseif self.class == "cabbage" then
+	 elseif self.class == "lettuce" then
 	  self.sprite=96
 	 elseif self.class == "lemon" then
 	  self.sprite=112
@@ -509,6 +588,8 @@ dead=false,
 update=function(self)
  if self.class == "pumpkin" then
   self:move_toward_target()
+ elseif self.class == "lettuce" then
+  self:stab_outwards()
  end
 end,
 draw=function(self)
@@ -522,7 +603,7 @@ draw=function(self)
   self.sprite=104
  elseif self.class == "melon" then
   self.sprite=108
- elseif self.class == "cabbage" then
+ elseif self.class == "lettuce" then
   self.sprite=106
  elseif self.class == "lemon" then
   self.sprite=132
@@ -540,6 +621,16 @@ move_toward_target=function(self)
 
 	 self.x+=self.dx*self.speed
 	 self.y+=self.dy*self.speed
+ end
+end,
+stab_outwards=function(self)
+ if distance(player.x+4,player.y+4,self.x+4,self.y+4) 
+ <= 15 then
+  player.hp-=1
+  --do animation and damage
+  --player if they're still
+  --within this distance
+  --at the end of the anim
  end
 end
 }
@@ -564,6 +655,10 @@ function collision(obj1,obj2)
   local xs=w1*0.5+w2*0.5
   local yd=abs((y1+(h1/2))-(y2+(h2/2)))
   local ys=h1/2+h2/2
+  
+  --test code
+
+  --end test code
   if xd<xs and
      yd<ys then
     hit=true
@@ -571,6 +666,25 @@ function collision(obj1,obj2)
 
   return hit
 end
+
+function hitbox_collision(px,py,hitbox_h,hitbox_w)
+ hitbox = {
+  x=px,
+  y=py,
+  h=hitbox_h,
+  w=hitbox_w
+ }
+ local colour = 1
+ for e in all(enemies) do
+  if collision(hitbox,e) then
+   colour = 7
+   --return e
+  end
+ end
+rect(px,py,px+hitbox_w,py+hitbox_h,colour)
+ --return nil
+end
+
 
 -->8
 --ui layer tab
