@@ -1016,7 +1016,9 @@ update=function(self)
 
  elseif self.class == "lettuce" then
   if self.state == "idle" then
+   self.sp={106,107}
   end
+  self.sp={122,123}
   self:stab_outwards() --lettuce
 
  elseif self.class == "carrot" then
