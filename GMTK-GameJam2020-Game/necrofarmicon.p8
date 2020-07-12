@@ -161,15 +161,18 @@ player_idle_dn = make_anim(60,{0,1})
 player_run_lr = make_anim(12,{20,21})
 player_run_up = make_anim(12,{18,19})
 player_run_dn = make_anim(12,{16,17})
-player_swing_lr = make_anim(10,{})
-player_swing_up = make_anim(10,{})
-player_swing_dn = make_anim(10,{})
-player_water_lr = make_anim(5,{})
-player_water_up = make_anim(5,{})
-player_water_dn = make_anim(5,{})
+player_swing_lr = make_anim(5,{14,30,30})
+player_swing_up = make_anim(5,{29,28,28})
+player_swing_dn = make_anim(5,{10,11,11})
+swing_smear_lr = make_anim(5,{196,15,15})
+swing_smear_up = make_anim(5,{196,12,12})
+swing_smear_dn = make_anim(5,{196,26,26})
+player_water_lr = make_anim(10,{34,50})
+player_water_up = make_anim(10,{32,33})
+player_water_dn = make_anim(10,{48,49})
 player_shoot_lr = make_anim(10,{46,47})
-player_shoor_up = make_anim(10,{})
-player_shoor_dn = make_anim(10,{})
+player_shoot_up = make_anim(10,{44,45})
+player_shoot_dn = make_anim(10,{60,61})
 player_dash_lr = make_anim(10,{40,41})
 player_dash_up = make_anim(10,{54,55})
 player_dash_dn = make_anim(10,{38,39})
@@ -185,7 +188,7 @@ hp=10,
 speed=0.6,
 sprite=0,
 direction="right",
-item="watering_pail",
+item="sword",
 seed="pumpkin",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
@@ -195,7 +198,6 @@ dash_cooldown=0,--not implemented
 keypress_timer=0,
 register={0,0,0,0},
 cur_moveanim=player_idle_lr,
-cur_actionanim=nil,
 update=function(self)
 
  self:handle_movement()
@@ -249,13 +251,14 @@ handle_movement=function(self)
 		  self.running=true
 		  if self.dash_ready then
 		   if btn(self.last_key_pressed) then
+      self.cur_moveanim = player_dash_lr
 		    self.x+=self.dash_distance
 		    self.dash_ready=false
 		    self.last_button_pressed=nil
 		   end
 		  end
 	  end
-   self.cur_moveanim=player_run_lr
+   if (self.dash_ready==false) self.cur_moveanim=player_run_lr
    self.fx=false
  end
  if btn(⬅️) then
@@ -266,13 +269,14 @@ handle_movement=function(self)
 	  self.last_key_pressed=⬅️
 	  if self.dash_ready then
     if btn(self.last_key_pressed) then
+     self.cur_moveanim = player_dash_lr
 	    self.x-=self.dash_distance
 	    self.dash_ready=false
 		   self.last_button_pressed=nil
 	   end
 	  end
 	 end
-  self.cur_moveanim=player_run_lr
+  if (self.dash_ready==false) self.cur_moveanim=player_run_lr
   self.fx = true
  end
  if btn(⬆️) then
@@ -283,13 +287,14 @@ handle_movement=function(self)
 	  self.last_key_pressed=⬆️
 	  if self.dash_ready then
     if btn(self.last_key_pressed) then
+     self.cur_moveanim = player_dash_up
 	    self.y-=self.dash_distance
 	    self.dash_ready=false
 		   self.last_button_pressed=nil
 	   end
 	  end
 	 end
-  self.cur_moveanim = player_run_up
+  if (self.dash_ready==false) self.cur_moveanim=player_run_up
  end
  if btn(⬇️) then
 	  if self.y < boundary_y-8 then
@@ -299,13 +304,14 @@ handle_movement=function(self)
 	  self.last_key_pressed=⬇️
 	  if self.dash_ready then
     if btn(self.last_key_pressed) then
+     self.cur_moveanim = player_dash_dn
 	    self.y+=self.dash_distance
 	    self.dash_ready=false
 		   self.last_button_pressed=nil
 	   end
 	  end
 	 end
-  self.cur_moveanim = player_run_dn
+  if (self.dash_ready==false) self.cur_moveanim=player_run_dn
  end
  if self.last_key_pressed==⬇️ and self.running~=true then
   self.cur_moveanim = player_idle_dn
@@ -323,6 +329,10 @@ end,
 use_item=function(self)
  if self.item=="sword" then
   self:swing_sword()
+  if (self.direction=="right") self.cur_moveanim = player_swing_lr
+  if (self.direction=="left") self.cur_moveanim = player_swing_lr
+  if (self.direction=="up") self.cur_moveanim = player_swing_up
+  if (self.direction=="down") self.cur_moveanim = player_swing_down
  elseif self.item=="watering_pail" then
   self:water_ground()
  elseif self.item == "hoe" then
@@ -714,7 +724,7 @@ function make_ui()
 
    rect(self.x+1,self.y+12,self.x+12,self.y+23,9) -- current tool
    rectfill(self.x+2,self.y+13,self.x+11,self.y+22,0)
-   if (player.item == "sword") spr(39,self.x+3,self.y+14)
+   if (player.item == "sword") spr(25,self.x+3,self.y+14)
    if (player.item == "watering_pail") spr(8,self.x+3,self.y+14)
   end
  end
