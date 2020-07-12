@@ -173,18 +173,18 @@ player_run_dn = make_anim(12,{16,17})
 player_swing_lr = make_anim(10,{14,30,30})
 player_swing_up = make_anim(10,{29,28,28})
 player_swing_dn = make_anim(10,{10,11,11})
-swing_smear_lr = make_anim(10,{196,15,15,15})
-swing_smear_up = make_anim(10,{196,12,12})
-swing_smear_dn = make_anim(10,{196,26,26})
+swing_smear_lr = make_anim(10,{196,15,196})
+swing_smear_up = make_anim(10,{196,12,196})
+swing_smear_dn = make_anim(10,{196,26,196})
 player_water_lr = make_anim(10,{34,50})
 player_water_up = make_anim(10,{48,49})
 player_water_dn = make_anim(10,{32,33})
 player_shoot_lr = make_anim(15,{46,46,47})
 player_shoot_up = make_anim(15,{60,60,61})
 player_shoot_dn = make_anim(15,{44,44,45})
-player_dash_lr = make_anim(10,{40,41})
-player_dash_up = make_anim(10,{54,55})
-player_dash_dn = make_anim(10,{38,39})
+player_dash_lr = make_anim(2,{40,41})
+player_dash_up = make_anim(2,{54,55})
+player_dash_dn = make_anim(2,{38,39})
 
 player = {
 x=64,
@@ -199,13 +199,12 @@ speed=0.6,
 sprite=0,
 direction="right",
 item="sword",
-seed="lemon",
+seed="lettuce",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
-dash_ready=false,
-dash_distance=16,
-dash_cooldown=0,--not implemented
-keypress_timer=0,
+dashing=false,
+dash_tick=0,
+dash_cooldown=0,
 register={0,0,0,0},
 cur_moveanim=player_idle_lr,
 attack={sprite=196,anim=nil,x=nil,y=nil,w=1,h=1},
@@ -224,7 +223,10 @@ update=function(self)
   self:idle_check()
  end
  if btn(❎) then
-  self:plant_seed()
+  if (self.dash_cooldown<=0) then
+   self.dashing=true
+   self:plant_seed()
+  end
  end
  if btn(🅾️) then
   self:use_item()
@@ -309,6 +311,7 @@ update=function(self)
  self.sprite=self.cur_moveanim:anim_update()
  if (self.attack.anim~=nil) self.attack.sprite=self.attack.anim:anim_update()
 end,
+
 draw=function(self)
  if self.pail_left_flag then
   spr(self.sprite,self.x-8,self.y,self.width,1,self.fx,self.fy)
@@ -319,117 +322,94 @@ draw=function(self)
   spr(self.attack.sprite,self.attack.x,self.attack.y,self.attack.w,self.attack.h,self.fx,self.fy)
  end
 end,
--- animate=function(self)
---
--- end,
+
 handle_movement=function(self)
+  --move keys
  self.running=false
- if self.last_key_pressed!=nil then
-  self.keypress_timer+=delta_time
-  if not btn(⬅️) and
-     not btn(➡️) and
-     not btn(⬆️) and
-     not btn(⬇️) then
-    self.dash_ready=true
-  end
- end
- if self.keypress_timer > .7 then
-  self.last_key_pressed=nil
-  self.keypress_timer=0
-  self.dash_ready=false
- end
- --move keys
- if btn(➡️) then
-	  if self.x < boundary_x-8 then
-		  self.x+=self.speed
-		  self.direction="right"
-		  self.last_key_pressed=➡️
-		  self.running=true
-		  if self.dash_ready then
-		   if btn(self.last_key_pressed) then
-      if (self.anim_locked!=true) self.cur_moveanim = player_dash_lr
-		    self.x+=self.dash_distance
-		    self.dash_ready=false
-		    self.last_button_pressed=nil
-		   end
-		  end
-	  end
-   if (self.dash_ready==false) and (self.anim_locked==false) then
-    self.cur_moveanim=player_run_lr
+ if not(self.dashing) then
+  if btn(➡️) then
+ 	 if self.x < boundary_x-8 then
+ 		  self.x+=self.speed
+ 		  self.direction="right"
+ 		  self.running=true
+    if (self.anim_locked==false) then
+     self.cur_moveanim=player_run_lr
+    end
+    self.fx=false
    end
-   self.fx=false
- end
- if btn(⬅️) then
-  if self.x > 0 then
-	  self.x-=self.speed
-	  self.direction="left"
-	  self.running=true
-	  self.last_key_pressed=⬅️
-	  if self.dash_ready then
-    if btn(self.last_key_pressed) then
-     if (self.anim_locked==false) self.cur_moveanim = player_dash_lr
-	    self.x-=self.dash_distance
-	    self.dash_ready=false
-		   self.last_button_pressed=nil
-	   end
-	  end
-	 end
-  if (self.dash_ready==false) and (self.anim_locked==false) then
-   self.cur_moveanim=player_run_lr
   end
-  self.fx = true
- end
- if btn(⬆️) then
-  if self.y > 4 then
-	  self.y-=self.speed
-	  self.direction="up"
-	  self.running=true
-	  self.last_key_pressed=⬆️
-	  if self.dash_ready then
-    if btn(self.last_key_pressed) then
-     if (self.anim_locked==false) self.cur_moveanim = player_dash_up
-	    self.y-=self.dash_distance
-	    self.dash_ready=false
-		   self.last_button_pressed=nil
-	   end
-	  end
-	 end
-  if (self.dash_ready==false) and (self.anim_locked==false) then
-   self.cur_moveanim=player_run_up
+  if btn(⬅️) then
+   if self.x > 0 then
+ 	  self.x-=self.speed
+ 	  self.direction="left"
+ 	  self.running=true
+    if (self.anim_locked==false) then
+     self.cur_moveanim=player_run_lr
+    end
+    self.fx = true
+   end
+  end
+  if btn(⬆️) then
+   if self.y > 4 then
+ 	  self.y-=self.speed
+ 	  self.direction="up"
+ 	  self.running=true
+    if (self.anim_locked==false) then
+     self.cur_moveanim=player_run_up
+    end
+   end
+  end
+  if btn(⬇️) then
+ 	 if self.y < boundary_y-8 then
+ 	  self.y+=self.speed
+ 	  self.direction="down"
+ 	  self.running=true
+    if (self.anim_locked==false) then
+     self.cur_moveanim=player_run_dn
+    end
+   end
+  end
+  self:idle_check()
+  self.dash_cooldown-=1
+ else
+  self.speed+=1
+  self.dash_tick+=1
+  if self.direction=="right" then
+   self.x+=self.speed
+   self.cur_moveanim=player_dash_lr
+  end
+  if self.direction=="left" then
+   self.x-=self.speed
+   self.cur_moveanim=player_dash_lr
+  end
+  if self.direction=="up" then
+   self.y-=self.speed
+   self.cur_moveanim=player_dash_up
+  end
+  if self.direction=="down" then
+   self.y+=self.speed
+   self.cur_moveanim=player_dash_dn
+  end
+  if self.dash_tick>3 then
+   self.speed=0.6
+   self.dash_tick=0
+   self.dashing=false
+   self.dash_cooldown=90
   end
  end
- if btn(⬇️) then
-	  if self.y < boundary_y-8 then
-	  self.y+=self.speed
-	  self.direction="down"
-	  self.running=true
-	  self.last_key_pressed=⬇️
-	  if self.dash_ready then
-    if btn(self.last_key_pressed) then
-     if (self.anim_locked==false) self.cur_moveanim = player_dash_dn
-	    self.y+=self.dash_distance
-	    self.dash_ready=false
-		   self.last_button_pressed=nil
-	   end
-	  end
-	 end
-  if (self.dash_ready==false) and (self.anim_locked==false) then
-   self.cur_moveanim=player_run_dn
-  end
- end
- self:idle_check()
 end,
+
 idle_check=function(self)
- if self.direction=="down" and self.running~=true then
+ if self.direction=="down" and self.running~=true and self.dashing~=true then
   if (self.anim_locked==false) self.cur_moveanim = player_idle_dn
  end
- if self.direction=="up" and self.running~=true then
+ if self.direction=="up" and self.running~=true and self.dashing~=true then
   if (self.anim_locked==false) self.cur_moveanim = player_idle_up
  end
- if self.direction=="right" and self.running~=true then
+ if self.direction=="right" and self.running~=true and self.dashing~=true then
   if (self.anim_locked==false) self.cur_moveanim = player_idle_lr
  end
- if self.direction=="left" and self.running~=true then
+ if self.direction=="left" and self.running~=true and self.dashing~=true then
   if (self.anim_locked==false) self.cur_moveanim = player_idle_lr
  end
 end,
@@ -735,7 +715,7 @@ update=function(self)
  if self.class == "pumpkin" then
   if self.state == "idle" then
    self.cur_moveanim = pumpkin_idle
-  end 
+  end
   self:move_toward_target()
  elseif self.class == "lettuce" then
   if self.state == "idle" then
@@ -769,7 +749,7 @@ update=function(self)
  end
 end,
 draw=function(self)
- 
+
  spr(self.sprite,self.x,self.y)
 end,
 animate=function(self)
@@ -908,7 +888,7 @@ function make_harvestUI(x,y)
   spr(79,self.x+80,self.y)
   print(player.harvested.melon,self.x+89,self.y+2,7)
   spr(112,self.x+96,self.y)
-  print(player.harvested.corn,self.x+105,self.y+2,7)
+  print(player.harvested.lemon,self.x+105,self.y+2,7)
  end
  return h
 end
