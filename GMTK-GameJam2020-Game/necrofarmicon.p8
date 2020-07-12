@@ -33,7 +33,10 @@ boundary_y =256
 function _init()
  --test code
  --mset(corr_seed_pos.x/8,corr_seed_pos.y/8,132)
- --create_enemy(75,55,"pumpkin",player)
+ create_enemy(75,55,"pumpkin",player)
+ for b in all(enemies) do
+  b:init()
+ end
  -- ui layer
  ui_layer = make_ui()
 
@@ -195,8 +198,8 @@ hp=10,
 speed=0.6,
 sprite=0,
 direction="right",
-item="watering_pail",
-seed="pumpkin",
+item="sword",
+seed="lemon",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 dash_ready=false,
@@ -449,7 +452,14 @@ swing_sword=function(self)
  if self.direction == "right" then
   enemy = hitbox_collision(self.x+8,self.y,8,8)
  elseif self.direction == "left" then
-  enemy = hitbox_collision(self.x,self.y,-8,8)
+  enemy = hitbox_collision(self.x-8,self.y,8,8)
+ elseif self.direction == "left" then
+  enemy = hitbox_collision(self.x,self.y+8,8,8)
+ elseif self.direction == "left" then
+  enemy = hitbox_collision(self.x,self.y-8,8,8)
+ end
+ if enemy != nil then
+  del(enemies,enemy)
  end
 end,
 
@@ -679,6 +689,15 @@ add(plants,plant)
 end
 -->8
 --enemies
+
+melon_idle = make_anim(60,{108,109})
+tomato_idle = make_anim(60,{102,103})
+carrot_idle = make_anim(60,{104,104})
+lettuce_idle = make_anim(60,{106,107})
+corn_idle = make_anim(60,{110,111})
+pumpkin_idle = make_anim(60,{130,131})
+lemon_explode = make_anim(60,{132,133,148,149})
+
 function create_enemy(xin,yin,class_in,target_in)
 enemy = {
 x=xin,
@@ -693,16 +712,11 @@ dy=0,
 hp=10,
 speed=.4,
 dead=false,
-update=function(self)
- if self.class == "pumpkin" then
-  self:move_toward_target()
- elseif self.class == "lettuce" then
-  self:stab_outwards()
- end
-end,
-draw=function(self)
+cur_moveanim=carrot_idle,
+state="idle",
+init=function(self)
  if self.class == "tomato" then
-  self.sprite=102
+  self.sprite=76
  elseif self.class == "corn" then
   self.sprite=128
  elseif self.class == "carrot" then
@@ -716,6 +730,46 @@ draw=function(self)
  elseif self.class == "lemon" then
   self.sprite=132
  end
+end,
+update=function(self)
+ if self.class == "pumpkin" then
+  if self.state == "idle" then
+   self.cur_moveanim = pumpkin_idle
+  end 
+  self:move_toward_target()
+ elseif self.class == "lettuce" then
+  if self.state == "idle" then
+   self.cur_moveanim = lettuce_idle
+  end
+  self:stab_outwards()
+ elseif self.class == "tomato" then
+  if self.state == "idle" then
+   self.cur_moveanim = tomato_idle
+  end
+ elseif self.class == "corn" then
+  if self.state == "idle" then
+   self.cur_moveanim = corn_idle
+  end
+ elseif self.class == "carrot" then
+  if self.state == "idle" then
+   self.cur_moveanim = carrot_idle
+  end
+ elseif self.class == "melon" then
+  if self.state == "idle" then
+   self.cur_moveanim = melon_idle
+  end
+ elseif self.class == "lemon" then
+  if self.state == "idle" then
+   self.cur_moveanim = nil
+  end
+  -- lemon explode logic here
+ end
+ if self.cur_moveanim != nil then
+  self.sprite=self.cur_moveanim:anim_update()
+ end
+end,
+draw=function(self)
+ 
  spr(self.sprite,self.x,self.y)
 end,
 animate=function(self)
@@ -775,7 +829,7 @@ function collision(obj1,obj2)
   return hit
 end
 
-function hitbox_collision(px,py,hitbox_h,hitbox_w)
+function hitbox_collision(px,py,hitbox_w,hitbox_h)
  hitbox = {
   x=px,
   y=py,
@@ -785,12 +839,12 @@ function hitbox_collision(px,py,hitbox_h,hitbox_w)
  local colour = 1
  for e in all(enemies) do
   if collision(hitbox,e) then
-   colour = 7
-   --return e
+   --colour = 7
+   return e
   end
  end
-rect(px,py,px+hitbox_w,py+hitbox_h,colour)
- --return nil
+--rect(px,py,px+hitbox_w,py+hitbox_h,colour)
+ return nil
 end
 
 
