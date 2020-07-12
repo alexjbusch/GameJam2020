@@ -17,6 +17,7 @@ items = {}
 runes={}
 explosions={}
 bullets={}
+reticules={}
 
 enemy_count =0
 plant_grow_time=1--15 --seconds
@@ -30,7 +31,7 @@ corr_seed_pos={x=15*8,y=15*8}
 corruption_range=2--tiles
 corruption_timer=0
 random_corruption_timer=0
-time_till_next_corruption = 20
+time_till_next_corruption = 2
 
 boundary_x =256
 boundary_y =256
@@ -156,6 +157,9 @@ function _draw()
    b:draw()
   end
   for b in all(explosions) do
+   b:draw()
+  end
+  for b in all(reticules) do
    b:draw()
   end
   for b in all(bullets) do
@@ -354,6 +358,17 @@ function make_bullet(xin,yin,xspd,yspd)
  add(bullets,b)
 end
 
+function make_reticule(xin,yin)
+reticule = {
+x=xin,
+y=yin,
+sprite=69,
+draw=function(self)
+ spr(self.sprite,self.x,self.y)
+end
+}
+add(reticules,reticule)
+end
 -->8
 --player
 --animations
@@ -411,9 +426,11 @@ width=1,
 hp=1,
 speed=0.6,
 sprite=0,
-direction="right",
-item="sword",
-seed="lettuce",
+direction="down",
+item="shotgun",
+seed="carrot",
+seeds={nil,"carrot","pumpkin","lettuce"},
+
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 dashing=false,
@@ -710,6 +727,8 @@ plant_seed=function(self)
    or mget((self.x+offset_x)/8,(self.y+offset_y)/8)
     ==77 --if wet corrupted soil
     then
+    
+   self.seed=self.seeds[flr(rnd(#self.seeds))+1]
    create_plant(self.x+offset_x,self.y+offset_y,self.seed)
   end
  end
@@ -927,7 +946,7 @@ handle_corruption=function(self)
    end
  end
  if self.corrupted then
-  if corruption_timer < 10 then
+  if corruption_timer < 1 then
    corruption_timer+=delta_time
   else
    create_enemy(self.x,self.y,self.class,player)
@@ -1045,6 +1064,7 @@ update=function(self)
 
  elseif self.class == "carrot" then
   if self.state == "idle" then
+   self:fire_at_player()
   end
 
  elseif self.class == "lemon" then
@@ -1070,6 +1090,10 @@ draw=function(self)
 end,
 
 animate=function(self)
+ if self.sp == nil then
+  del(enemies,self)
+  return
+ end
  self.t=(self.t+1)%self.s
  if (self.t==0) self.f=self.f%#self.sp+1
  self.sprite=self.sp[self.f]
@@ -1114,6 +1138,47 @@ end
 }
 
 add(enemies,enemy)
+end
+
+function create_bullet(xin,yin)
+ bullet = {
+ x=xin,
+ y=yin,
+ dx = 0,
+ dy = -1,
+ target = {x=player.x,y=player.y},
+ speed =3,
+ lifespan_timer = 0,
+ lifespan = 60*3,
+ draw=function(self)
+		pset(self.x,self.y,9)
+		pset(self.x+1,self.y,9)
+		pset(self.x,self.y+1,9)
+		pset(self.x+1,self.y+1,9)
+	end,
+	update=function(self)
+		if distance(player.x,player.y,self.x,self.y) < 8 then
+	  del(bullets,self)
+	  player.hp-=1
+	 end
+	 if distance(self.target.x,self.target.y,self.x,self.y) < 5 then
+	  
+	  del(bullets,self)
+	 end
+	 self.lifespan_timer+=1
+	 if self.lifespan_timer > self.lifespan then	 
+	  del(bullets,self)
+	 end
+
+	 angle=atan2(self.x-self.target.x-4,self.y-self.target.y-4)
+  self.dx = -cos(angle)
+  self.dy = -sin(angle)
+	 
+	 self.x+=self.dx*self.speed
+	 self.y+=self.dy*self.speed	   	 
+	end
+}
+ add(bullets,bullet)
 end
 -->8
 --collision
