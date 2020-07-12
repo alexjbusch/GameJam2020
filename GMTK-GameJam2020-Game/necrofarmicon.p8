@@ -7,7 +7,7 @@ __lua__
 --game
 --kill
 --shop
-scene="game"
+scene="title"
 
 --game loops
 objects = {}
@@ -43,12 +43,42 @@ function _init()
  end
  -- ui layer
  ui_layer = make_ui()
-
+ --title screen globals
+ title = {
+  str="start",
+  x=54,
+  y=83,
+  c=6,
+  timer=0,
+  t=0,
+  f=1,
+  s=3,
+  sp={6,7}
+ }
+ begin=false
+  --end screen globals
+  try_again=false
+ endscreen={
+  timer=0,
+ }
 end
 
 function _update60()
  if scene == "title" then
-  if (btnp(4)) scene="game"
+  if begin==false then
+   title.y = title.y+0.1*sin(title.timer)
+   title.timer+=0.0125
+   if (btnp(4)) then
+    begin=true
+    title.timer=0
+   end
+  else
+   title.y=83
+   title.t=(title.t+1)%title.s
+   if (title.t==0) title.f=title.f%#title.sp+1
+   title.timer+=1
+   if (title.timer > 20) scene="game"
+  end
  end
  if scene == "game" then
   player:update()
@@ -79,15 +109,21 @@ function _update60()
   end
  end
  corrupt_dirt()
- 
+ if scene=="over" then
+
+ end
+
 end
 
 function _draw()
  if scene == "title" then
   cls()
-  print("harvest",8,8,7)
-  print("v0.2 placeholder title screen",8,16,7)
-  print("press z to start",40,60,7)
+  -- print("harvest",8,8,7)
+  -- print("v0.2 placeholder title screen",8,16,7)
+  -- print("press z to start",40,60,7)
+  sspr(64,96,32,32,0,0,128,128)
+  print(title.str,title.x,title.y,title.sp[title.f])
+  --?sin(title.timer),64,40,7
  end
  if scene=="game" then
   cls()
@@ -112,6 +148,22 @@ function _draw()
   ui_layer:draw()
   --?player.attack.anim,player.x,player.y-8,0
  end
+ if scene == "over" then
+  --player explode animation?
+  if try_again then
+   cls()
+   print("try again?",64-18,60,7)
+   if (btnp(4)) then
+    try_again=false
+    scene="title"
+   end
+  else
+   cls()
+   sspr(96,96,32,32,0,0,128,128)
+   endscreen.timer+=1
+   if (endscreen.timer > 180) try_again=true
+  end
+ end
 end
 
 function corrupt_dirt()
@@ -128,7 +180,7 @@ function corrupt_dirt()
      mset(x+offset_x,y+offset_y,76)
     elseif mget(x+offset_x,y+offset_y) == 71 then
      mset(x+offset_x,y+offset_y,77)
-    end   
+    end
 	   offset_y+=1
 	  end
 
@@ -137,9 +189,9 @@ function corrupt_dirt()
   end
   corruption_timer=0
   corruption_range+=1
- 
+
   randomly_corrupt_dirt()
-	  
+
  end
 end
 
@@ -155,11 +207,11 @@ function randomly_corrupt_dirt()
 	     mset(x,y,77)
 	    end
 	   end
-    y+=1 
+    y+=1
    end
     y=0
     x+=1
-  end  
+  end
 end
 --utility functions start here
 
@@ -300,7 +352,7 @@ hp=10,
 speed=0.6,
 sprite=0,
 direction="right",
-item="sword",
+item="shotgun",
 seed="lettuce",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
@@ -313,6 +365,7 @@ attack={sprite=196,anim=nil,x=nil,y=nil,w=1,h=1},
 anim_locked=false,
 pail_left_flag=false,
 update=function(self)
+ self.check_die()
  if self.cur_moveanim.done then
   self.anim_locked = false
   self.attack.anim = nil
@@ -604,6 +657,12 @@ mine_rock=function(self)
   then --set to grass
  mset((self.x+offset_x)/8,(self.y+offset_y)/8,87)
  end
+end,
+
+check_die=function(self)
+ if player.hp <= 0 then
+  scene="over"
+ end
 end
 }
 
@@ -838,7 +897,7 @@ update=function(self)
    if distance(player.x+4,player.y+4,self.x+4,self.y+4)
     >= 9 then
    self:move_toward_target()
-   
+
    else
     self.state ="attacking"
     self.cur_moveanim = pumpkin_attack
