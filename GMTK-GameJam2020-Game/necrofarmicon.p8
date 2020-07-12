@@ -7,8 +7,8 @@ __lua__
 --game
 --kill
 --shop
-scene="title"
 
+function _init()
 --game loops
 objects = {}
 plants = {}
@@ -16,6 +16,7 @@ enemies = {}
 items = {}
 runes={}
 explosions={}
+bullets={}
 
 enemy_count =0
 plant_grow_time=1--15 --seconds
@@ -29,15 +30,16 @@ corr_seed_pos={x=15*8,y=15*8}
 corruption_range=2--tiles
 corruption_timer=0
 random_corruption_timer=0
-time_till_next_corruption = 1
+time_till_next_corruption = 20
 
 boundary_x =256
 boundary_y =256
 
-function _init()
  --test code
  --mset(corr_seed_pos.x/8,corr_seed_pos.y/8,132)
- create_enemy(75,55,"pumpkin",player)
+ scene="title"
+ player.hp=10
+ --create_enemy(75,55,"pumpkin",player)
  for b in all(enemies) do
   b:init()
  end
@@ -57,7 +59,8 @@ function _init()
  }
  begin=false
   --end screen globals
-  try_again=false
+ try_again=false
+ exploded=false
  endscreen={
   timer=0,
  }
@@ -106,11 +109,22 @@ function _update60()
    for b in all(explosions) do
     b:update()
    end
+   for b in all(bullets) do
+    b:update()
+   end
   end
  end
  corrupt_dirt()
  if scene=="over" then
-
+  player.sprite = 192
+  endscreen.timer+=1
+  if try_again and (btnp(5)) then
+   try_again=false
+   exploded=false
+   _init()
+  end
+  if (endscreen.timer > 60) exploded=true
+  if (endscreen.timer > 240) try_again=true
  end
 
 end
@@ -144,24 +158,27 @@ function _draw()
   for b in all(explosions) do
    b:draw()
   end
+  for b in all(bullets) do
+   b:draw()
+  end
   player:draw()
   ui_layer:draw()
-  --?player.attack.anim,player.x,player.y-8,0
+  --?player.shotgun_cooldown,player.x,player.y-8,0
  end
  if scene == "over" then
-  --player explode animation?
-  if try_again then
-   cls()
-   print("try again?",64-18,60,7)
-   if (btnp(4)) then
-    try_again=false
-    scene="title"
+  if exploded then
+   if try_again then
+    cls()
+    print("❎ try again?",64-18,60,7)
+   else
+    cls()
+    camera(0,0)
+    sspr(96,96,32,32,0,0,128,128)
    end
   else
-   cls()
-   sspr(96,96,32,32,0,0,128,128)
-   endscreen.timer+=1
-   if (endscreen.timer > 180) try_again=true
+   for b in all(explosions) do
+    b:draw()
+   end
   end
  end
 end
@@ -235,35 +252,35 @@ end
 --end utility functions
 
 function make_rune(xin,yin,plant_in)
-rune = {
-x=xin,
-y=yin,
-plant=plant_in,
-sprites = {164,165,166,167,180,181,182,183},
-sprite=164,
-sprite_change_timer=0,
-update=function(self)
- if self.sprite_change_timer < 1 then
-  self.sprite_change_timer+=delta_time
- else
-  self.sprite = self.sprites[flr(rnd(7))+1]
-  self.sprite_change_timer=0
- end
- if self.plant == nil then
-  del(runes,self)
- end
-end,
-draw=function(self)
- spr(self.sprite,self.x,self.y)
-end
-}
-add(runes,rune)
-return rune
+ rune = {
+  x=xin,
+  y=yin,
+  plant=plant_in,
+  sprites = {164,165,166,167,180,181,182,183},
+  sprite=164,
+  sprite_change_timer=0,
+  update=function(self)
+   if self.sprite_change_timer < 1 then
+    self.sprite_change_timer+=delta_time
+   else
+    self.sprite = self.sprites[flr(rnd(7))+1]
+    self.sprite_change_timer=0
+   end
+   if self.plant == nil then
+    del(runes,self)
+   end
+  end,
+  draw=function(self)
+   spr(self.sprite,self.x,self.y)
+  end
+ }
+ add(runes,rune)
+ return rune
 end
 
 --explosion code
 function generate_explosion_particles(xin,yin)
-explosion = {
+ explosion = {
  x=63,
  y=63,
  speed = .5,
@@ -281,10 +298,10 @@ explosion = {
 	  del(explosions,self)
 	 end
 	end
-}
-explosion.x = xin
-explosion.y = yin
-add(explosions,explosion)
+ }
+ explosion.x = xin
+ explosion.y = yin
+ add(explosions,explosion)
 end
 
 function create_explosion(xin,yin)
@@ -294,6 +311,49 @@ function create_explosion(xin,yin)
 		  particle_count += 1
 	end
 end
+--bullet code
+function make_shot(xin,yin,xspd,yspd,dir)
+ make_bullet(xin,yin,xspd,yspd)
+ if dir == "right" or dir == "left" then
+  make_bullet(xin,yin,xspd,yspd+0.5)
+  make_bullet(xin,yin,xspd,yspd-0.5)
+ end
+ if dir == "up" or dir == "down" then
+  make_bullet(xin,yin,xspd+0.5,yspd)
+  make_bullet(xin,yin,xspd-0.5,yspd)
+ end
+end
+
+function make_bullet(xin,yin,xspd,yspd)
+ local b = {}
+ b.x=xin
+ b.y=yin
+ b.start={x=xin,y=yin}
+ b.xspd=xspd
+ b.yspd=yspd
+ b.rnge=30
+ b.enemy=nil
+
+ function b:draw()
+  circfill(self.x,self.y,1,9)
+ end
+
+ function b:update()
+  self.x+=self.xspd
+  self.y+=self.yspd
+  self.enemy = hitbox_collision(self.x,self.y,8,8)
+  if self.enemy != nil then
+   create_explosion(self.enemy.x,self.enemy.y)
+   del(enemies,self.enemy)
+   del(bullets,self)
+  end
+  if distance(self.x,self.y,self.start.x,self.start.y)>self.rnge then
+   del(bullets,self)
+  end
+ end
+ add(bullets,b)
+end
+
 -->8
 --player
 --animations
@@ -348,7 +408,7 @@ h=8,
 fx=false,
 fy=false,
 width=1,
-hp=10,
+hp=1,
 speed=0.6,
 sprite=0,
 direction="right",
@@ -364,107 +424,121 @@ cur_moveanim=player_idle_lr,
 attack={sprite=196,anim=nil,x=nil,y=nil,w=1,h=1},
 anim_locked=false,
 pail_left_flag=false,
+shotgun_cooldown=0,
+is_dead=false,
+dead_timer=0,
 update=function(self)
- self.check_die()
- if self.cur_moveanim.done then
-  self.anim_locked = false
-  self.attack.anim = nil
-  self.attack.w=1
-  self.attack.h=1
-  self.width=1
-  if (self.pail_left_flag) then
-   self.pail_left_flag=false
+ if not(self.is_dead) then
+  self.shotgun_cooldown-=1
+  self.shotgun_cooldown=max(0,self.shotgun_cooldown)
+  if self.cur_moveanim.done then
+   self.anim_locked = false
+   self.attack.anim = nil
+   self.attack.w=1
+   self.attack.h=1
+   self.width=1
+   if (self.pail_left_flag) then
+    self.pail_left_flag=false
+   end
+   self:idle_check()
   end
-  self:idle_check()
- end
- if btn(❎) then
-  if (self.dash_cooldown<=0) then
-   self.dashing=true
-   self:plant_seed()
+  if btn(❎) then
+   if (self.dash_cooldown<=0) then
+    self.dashing=true
+    self:plant_seed()
+   end
   end
- end
- if btn(🅾️) then
-  self:use_item()
-  if self.item=="sword" then
-   if self.direction=="right" then
-    self.cur_moveanim = player_swing_lr
-    self.attack.anim = swing_smear_lr
-    self.attack.x=self.x+8
-    self.attack.y=self.y-4
-    self.attack.h=2
-    self.anim_locked=true
-   end
-   if self.direction=="left" then
-    self.cur_moveanim = player_swing_lr
-    self.attack.anim=swing_smear_lr
-    self.attack.x=self.x-8
-    self.attack.y=self.y-4
-    self.attack.h = 2
-    self.anim_locked=true
-   end
-   if self.direction=="up" then
-    self.cur_moveanim = player_swing_up
-    self.attack.anim=swing_smear_up
-    self.attack.x=self.x-4
-    self.attack.y=self.y-8
-    self.attack.w = 2
-    self.anim_locked=true
-   end
-   if self.direction=="down" then
-     self.cur_moveanim = player_swing_dn
-     self.attack.anim=swing_smear_dn
-     self.attack.x=self.x-4
-     self.attack.y=self.y+8
-     self.attack.w = 2
-     self.width=1
+  if btn(🅾️) then
+   self:use_item()
+   if self.item=="sword" then
+    if self.direction=="right" then
+     self.cur_moveanim = player_swing_lr
+     self.attack.anim = swing_smear_lr
+     self.attack.x=self.x+8
+     self.attack.y=self.y-4
+     self.attack.h=2
      self.anim_locked=true
+    end
+    if self.direction=="left" then
+     self.cur_moveanim = player_swing_lr
+     self.attack.anim=swing_smear_lr
+     self.attack.x=self.x-8
+     self.attack.y=self.y-4
+     self.attack.h = 2
+     self.anim_locked=true
+    end
+    if self.direction=="up" then
+     self.cur_moveanim = player_swing_up
+     self.attack.anim=swing_smear_up
+     self.attack.x=self.x-4
+     self.attack.y=self.y-8
+     self.attack.w = 2
+     self.anim_locked=true
+    end
+    if self.direction=="down" then
+      self.cur_moveanim = player_swing_dn
+      self.attack.anim=swing_smear_dn
+      self.attack.x=self.x-4
+      self.attack.y=self.y+8
+      self.attack.w = 2
+      self.width=1
+      self.anim_locked=true
+    end
+   end
+   if self.item=="shotgun" then
+    if self.direction=="right" or self.direction=="left" then
+     self.cur_moveanim = player_shoot_lr
+     self.anim_locked=true
+    end
+    if self.direction=="up" then
+     self.cur_moveanim = player_shoot_up
+     self.anim_locked=true
+    end
+    if self.direction=="down" then
+     self.cur_moveanim = player_shoot_dn
+     self.anim_locked=true
+    end
+   end
+   if self.item=="watering_pail" then
+    if self.direction=="right" then
+     self.cur_moveanim = player_water_lr
+     self.width=2
+     self.anim_locked=true
+    end
+    if self.direction=="left" then
+     self.cur_moveanim = player_water_lr
+     self.width=2
+     self.pail_left_flag=true
+     self.anim_locked=true
+    end
+    if self.direction=="up" then
+     self.cur_moveanim = player_water_up
+     self.anim_locked=true
+    end
+    if self.direction=="down" then
+     self.cur_moveanim = player_water_dn
+     self.anim_locked=true
+    end
    end
   end
-  if self.item=="shotgun" then
-   if self.direction=="right" or self.direction=="left" then
-    self.cur_moveanim = player_shoot_lr
-    self.anim_locked=true
-   end
-   if self.direction=="up" then
-    self.cur_moveanim = player_shoot_up
-    self.anim_locked=true
-   end
-   if self.direction=="down" then
-    self.cur_moveanim = player_shoot_dn
-    self.anim_locked=true
+  --collision logic here
+  for b in all(enemies) do
+   if collision(self,b) then
+    --do collision stuff
    end
   end
-  if self.item=="watering_pail" then
-   if self.direction=="right" then
-    self.cur_moveanim = player_water_lr
-    self.width=2
-    self.anim_locked=true
-   end
-   if self.direction=="left" then
-    self.cur_moveanim = player_water_lr
-    self.width=2
-    self.pail_left_flag=true
-    self.anim_locked=true
-   end
-   if self.direction=="up" then
-    self.cur_moveanim = player_water_up
-    self.anim_locked=true
-   end
-   if self.direction=="down" then
-    self.cur_moveanim = player_water_dn
-    self.anim_locked=true
-   end
+  self:handle_movement()
+  self.sprite=self.cur_moveanim:anim_update()
+  if (self.attack.anim~=nil) self.attack.sprite=self.attack.anim:anim_update()
+  self:check_die()
+ else
+  self.dead_timer+=1
+  if self.dead_timer > 120 then
+   self.dead_timer=0
+   self.is_dead = false
+   scene="over"
   end
  end
- --collision logic here
- for b in all(enemies) do
-  if collision(self,b) then
-   --do collision stuff
-  end
- end
- self:handle_movement()
- self.sprite=self.cur_moveanim:anim_update()
- if (self.attack.anim~=nil) self.attack.sprite=self.attack.anim:anim_update()
 end,
 
 draw=function(self)
@@ -578,8 +652,31 @@ use_item=function(self)
  elseif self.item == "pickaxe" then
   self:mine_rock()
  elseif self.item=="shotgun" then
+  self:fire()
  end
 
+end,
+
+fire=function(self)
+ if self.shotgun_cooldown == 0 then
+  if self.direction == "right" then
+   make_shot(self.x+8,self.y+4,2,0,self.direction)
+   self.x-=4
+  end
+  if self.direction == "left" then
+   make_shot(self.x,self.y+4,-2,0,self.direction)
+   self.x+=4
+  end
+  if self.direction == "up" then
+   make_shot(self.x,self.y+4,0,-2,self.direction)
+   self.y+=4
+  end
+  if self.direction == "down" then
+   make_shot(self.x,self.y+4,0,2,self.direction)
+   self.y-=4
+  end
+  self.shotgun_cooldown = 45
+ end
 end,
 
 swing_sword=function(self)
@@ -660,8 +757,10 @@ mine_rock=function(self)
 end,
 
 check_die=function(self)
- if player.hp <= 0 then
-  scene="over"
+ if self.hp <= 0 then
+  self.sprite=196
+  create_explosion(self.x,self.y)
+  self.is_dead=true
  end
 end
 }
@@ -824,7 +923,7 @@ handle_corruption=function(self)
   == 77then --corrupted dirt
    if not self.corrupted then
     self.corrupted=true
-    self.rune = make_rune(self.x,self.y,self)
+    --self.rune = make_rune(self.x,self.y,self)
    end
  end
  if self.corrupted then
