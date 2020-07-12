@@ -199,7 +199,7 @@ cur_actionanim=nil,
 update=function(self)
 
  self:handle_movement()
- self.sprite=self.cur_anim:anim_update()
+ self.sprite=self.cur_moveanim:anim_update()
  if btn(❎) then
   self:plant_seed()
  end
@@ -215,12 +215,10 @@ update=function(self)
 end,
 draw=function(self)
  spr(self.sprite,self.x,self.y,1,1,self.fx,self.fy)
- hitbox_collision(self.x+8,self.y,8,8)
- hitbox_collision(self.x-8,self.y,8,8)
- hitbox_collision(self.x,self.y+8,8,8)
- hitbox_collision(self.x,self.y-8,8,8)
-
-end,
+ -- hitbox_collision(self.x+8,self.y,8,8)
+ -- hitbox_collision(self.x-8,self.y,8,8)
+ -- hitbox_collision(self.x,self.y+8,8,8)
+ -- hitbox_collision(self.x,self.y-8,8,8)
 end,
 -- animate=function(self)
 --
@@ -230,8 +228,8 @@ handle_movement=function(self)
  self.running=false
  if self.last_key_pressed!=nil then
   self.keypress_timer+=delta_time
-  if not btn(⬅️) and 
-     not btn(➡️) and 
+  if not btn(⬅️) and
+     not btn(➡️) and
      not btn(⬆️) and
      not btn(⬇️) then
     self.dash_ready=true
@@ -257,7 +255,7 @@ handle_movement=function(self)
 		   end
 		  end
 	  end
-   self.cur_anim=player_run_lr
+   self.cur_moveanim=player_run_lr
    self.fx=false
  end
  if btn(⬅️) then
@@ -274,7 +272,7 @@ handle_movement=function(self)
 	   end
 	  end
 	 end
-  self.cur_anim=player_run_lr
+  self.cur_moveanim=player_run_lr
   self.fx = true
  end
  if btn(⬆️) then
@@ -284,14 +282,14 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬆️
 	  if self.dash_ready then
-    if btn(self.last_key_pressed) then	  
-	    self.y-=self.dash_distance  
+    if btn(self.last_key_pressed) then
+	    self.y-=self.dash_distance
 	    self.dash_ready=false
 		   self.last_button_pressed=nil
 	   end
 	  end
 	 end
-  self.cur_anim = player_run_up
+  self.cur_moveanim = player_run_up
  end
  if btn(⬇️) then
 	  if self.y < boundary_y-8 then
@@ -300,26 +298,26 @@ handle_movement=function(self)
 	  self.running=true
 	  self.last_key_pressed=⬇️
 	  if self.dash_ready then
-    if btn(self.last_key_pressed) then	  
+    if btn(self.last_key_pressed) then
 	    self.y+=self.dash_distance
 	    self.dash_ready=false
 		   self.last_button_pressed=nil
 	   end
 	  end
 	 end
-  self.cur_anim = player_run_dn
+  self.cur_moveanim = player_run_dn
  end
  if self.last_key_pressed==⬇️ and self.running~=true then
-  self.cur_anim = player_idle_dn
+  self.cur_moveanim = player_idle_dn
  end
  if self.last_key_pressed==⬆️ and self.running~=true then
-  self.cur_anim = player_idle_up
+  self.cur_moveanim = player_idle_up
  end
  if self.last_key_pressed==➡️ and self.running~=true then
-  self.cur_anim = player_idle_lr
+  self.cur_moveanim = player_idle_lr
  end
  if self.last_key_pressed==⬅️ and self.running~=true then
-  self.cur_anim = player_idle_lr
+  self.cur_moveanim = player_idle_lr
  end
 end,
 use_item=function(self)
@@ -624,7 +622,7 @@ move_toward_target=function(self)
  end
 end,
 stab_outwards=function(self)
- if distance(player.x+4,player.y+4,self.x+4,self.y+4) 
+ if distance(player.x+4,player.y+4,self.x+4,self.y+4)
  <= 15 then
   player.hp-=1
   --do animation and damage
@@ -655,7 +653,7 @@ function collision(obj1,obj2)
   local xs=w1*0.5+w2*0.5
   local yd=abs((y1+(h1/2))-(y2+(h2/2)))
   local ys=h1/2+h2/2
-  
+
   --test code
 
   --end test code
