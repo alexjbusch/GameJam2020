@@ -412,8 +412,8 @@ hp=1,
 speed=0.6,
 sprite=0,
 direction="right",
-item="shotgun",
-seed="lettuce",
+item="sword",
+seed="carrot",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 dashing=false,
@@ -931,6 +931,7 @@ handle_corruption=function(self)
    corruption_timer+=delta_time
   else
    create_enemy(self.x,self.y,self.class)
+   enemy:init()
    del(plants,self)
   end
  end
@@ -942,12 +943,12 @@ end
 -->8
 --enemies
 
-melon_idle = make_anim(60,{108,109})
-tomato_idle = make_anim(60,{102,103})
+--melon_idle = make_anim(60,{108,109})
+--tomato_idle = make_anim(60,{102,103})
 carrot_idle = make_anim(60,{104,104})
 lettuce_idle = make_anim(60,{106,107})
 lettuce_attack = make_anim(10,{122,123})
-corn_idle = make_anim(60,{110,111})
+--corn_idle = make_anim(60,{110,111})
 pumpkin_idle = make_anim(60,{130,131})
 pumpkin_attack = make_anim(30,{120,121})
 lemon_explode = make_anim(60,{132,133,148,149})
@@ -960,6 +961,10 @@ y=yin,
 class=class_in,
 target=target_in,
 sprite=13,
+t=0,
+f=1,
+s=60,
+sp=nil,
 w=8,
 h=8,
 dx=0,
@@ -967,30 +972,34 @@ dy=0,
 hp=10,
 speed=.4,
 dead=false,
-cur_moveanim=carrot_idle,
 state="idle",
 attack_cooldown_timer = 0,
 init=function(self)
- if self.class == "tomato" then
+ if self.class == "tomato" then --deleted
   self.sprite=76
- elseif self.class == "corn" then
+ elseif self.class == "corn" then --deleted
   self.sprite=128
  elseif self.class == "carrot" then
-  self.sprite=130
- elseif self.class == "pumpkin" then
   self.sprite=104
- elseif self.class == "melon" then
+  self.sp={104,105}
+ elseif self.class == "pumpkin" then
+  self.sprite=130
+  self.sp={130,131}
+ elseif self.class == "melon" then --deleted
   self.sprite=108
  elseif self.class == "lettuce" then
   self.sprite=106
+  self.sp={106,107}
  elseif self.class == "lemon" then
   self.sprite=132
+  self.sp={132,133,148,149}
  end
 end,
 update=function(self)
  if self.class == "pumpkin" then
   if self.state == "idle" then
-   self.cur_moveanim = pumpkin_idle
+   --self.cur_moveanim = pumpkin_idle
+   self:animate()
   end
   if self.state == "idle" then
    if distance(player.x+4,player.y+4,self.x+4,self.y+4)
@@ -999,7 +1008,7 @@ update=function(self)
 
    else
     self.state ="attacking"
-    self.cur_moveanim = pumpkin_attack
+    self:animate()
    end
   elseif self.state == "attacking" then
    if self.attack_cooldown_timer < 1 then
@@ -1010,48 +1019,40 @@ update=function(self)
     <= 9 then
      player.hp-=1
     end
-    self.cur_moveanim = pumpkin_idle
+    self:animate()
     self.state = "idle"
    end
   end
  elseif self.class == "lettuce" then
   if self.state == "idle" then
-   self.cur_moveanim = lettuce_idle
+   self:animate()
   end
   self:stab_outwards()
- elseif self.class == "tomato" then
-  if self.state == "idle" then
-   self.cur_moveanim = tomato_idle
-  end
- elseif self.class == "corn" then
-  if self.state == "idle" then
-   self.cur_moveanim = corn_idle
-  end
  elseif self.class == "carrot" then
   if self.state == "idle" then
-   self.cur_moveanim = carrot_idle
-  end
- elseif self.class == "melon" then
-  if self.state == "idle" then
-   self.cur_moveanim = melon_idle
+   self:animate()
   end
  elseif self.class == "lemon" then
   if self.state == "idle" then
-   self.cur_moveanim = nil
+   self:animate()
   end
   -- lemon explode logic here
  end
- if self.cur_moveanim != nil then
-  self.sprite=self.cur_moveanim:anim_update()
- end
+ -- if self.cur_moveanim != nil then
+ --  self.sprite=self.cur_moveanim:anim_update()
+ -- end
 end,
-draw=function(self)
 
+draw=function(self)
  spr(self.sprite,self.x,self.y)
 end,
+
 animate=function(self)
- --animation code
+ self.t=(self.t+1)%self.s
+ if (self.t==0) self.f=self.f%#self.sp+1
+ self.sprite=self.sp[self.f]
 end,
+
 move_toward_target=function(self)
  if self.target != nil then
  	angle=atan2(self.x-self.target.x-4,self.y-self.target.y-4)
