@@ -163,7 +163,8 @@ running=false,
 anim_timer=0,
 dash_ready=false,
 register={0,0,0,0},
-cur_anim=player_idle_lr,
+cur_moveanim=player_idle_lr,
+cur_actionanim=nil,
 update=function(self)
 
  self:handle_movement()
