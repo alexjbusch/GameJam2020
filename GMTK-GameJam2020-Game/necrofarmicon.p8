@@ -15,7 +15,7 @@ plants = {}
 enemies = {}
 items = {}
 
-plant_grow_time=3 --seconds
+plant_grow_time=15 --seconds
 plant_death_time=5--seconds
 delta_time = 1/60 --time since last frame
 --note that delta_time is 1/30
@@ -23,9 +23,9 @@ delta_time = 1/60 --time since last frame
 corr_seed_pos={x=15*8,y=15*8}
 -- the position in pixels of the
 -- corruption seed on the map
-corruption_range=1--tiles
+corruption_range=2--tiles
 corruption_timer=0
-time_till_next_corruption = 2
+time_till_next_corruption = 30
 
 boundary_x =256
 boundary_y =256
@@ -97,6 +97,24 @@ end
 
 function corrupt_dirt()
  corruption_timer+=delta_time
+ mset(65,65,100)
+ if corruption_timer/10 ==1 then
+  
+  local tile_x =0
+  local tile_y =0
+  while tile_x < 32 do
+   while tile_y < 32 do
+     if mget(tile_x,tile_y) == 98 then
+      if rnd(10) == 1 then
+       mset(tile_x,tile_y,100)
+      end
+     end
+    tile_y+=1
+   end
+   tile_y=0
+   tile_x+=1
+  end
+ end
  --seconds till next corruption
  if corruption_timer>time_till_next_corruption then
   local x = corr_seed_pos.x/8
@@ -674,9 +692,12 @@ melon_idle = make_anim(60,{108,109})
 tomato_idle = make_anim(60,{102,103})
 carrot_idle = make_anim(60,{104,104})
 lettuce_idle = make_anim(60,{106,107})
+lettuce_attack = make_anim(10,{122,123})
 corn_idle = make_anim(60,{110,111})
 pumpkin_idle = make_anim(60,{130,131})
+pumpkin_attack = make_anim(30,{120,121})
 lemon_explode = make_anim(60,{132,133,148,149})
+
 
 function create_enemy(xin,yin,class_in,target_in)
 enemy = {
@@ -694,6 +715,7 @@ speed=.4,
 dead=false,
 cur_moveanim=carrot_idle,
 state="idle",
+attack_cooldown_timer = 0,
 init=function(self)
  if self.class == "tomato" then
   self.sprite=76
@@ -716,7 +738,28 @@ update=function(self)
   if self.state == "idle" then
    self.cur_moveanim = pumpkin_idle
   end
-  self:move_toward_target()
+  if self.state == "idle" then
+   if distance(player.x+4,player.y+4,self.x+4,self.y+4)
+    >= 9 then
+   self:move_toward_target()
+   
+   else
+    self.state ="attacking"
+    self.cur_moveanim = pumpkin_attack
+   end
+  elseif self.state == "attacking" then
+   if self.attack_cooldown_timer < 1 then
+    self.attack_cooldown_timer+=delta_time
+   else
+    self.attack_cooldown_timer=0
+    if distance(player.x+4,player.y+4,self.x+4,self.y+4)
+    <= 9 then
+     player.hp-=1
+    end
+    self.cur_moveanim = pumpkin_idle
+    self.state = "idle"
+   end
+  end
  elseif self.class == "lettuce" then
   if self.state == "idle" then
    self.cur_moveanim = lettuce_idle
@@ -766,13 +809,22 @@ move_toward_target=function(self)
  end
 end,
 stab_outwards=function(self)
+ if self.state == "attacking" then
+  self.cur_moveanim = lettuce_attack
+  if self.attack_cooldown_timer < 1 then
+   self.attack_cooldown_timer+=delta_time
+  else
+    if distance(player.x+4,player.y+4,self.x+4,self.y+4)
+    <= 15 then
+     player.hp-=1
+    end
+    self.state="idle"
+    self.attack_cooldown_timer=0
+  end
+ end
  if distance(player.x+4,player.y+4,self.x+4,self.y+4)
  <= 15 then
-  player.hp-=1
-  --do animation and damage
-  --player if they're still
-  --within this distance
-  --at the end of the anim
+  self.state = "attacking"
  end
 end
 }
