@@ -465,6 +465,7 @@ sprite=0,
 direction="down",
 item="shotgun",
 seed="carrot",
+seeds={nil,"carrot","pumpkin","lettuce"},
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 dashing=false,
@@ -761,6 +762,8 @@ plant_seed=function(self)
    or mget((self.x+offset_x)/8,(self.y+offset_y)/8)
     ==77 --if wet corrupted soil
     then
+    
+   self.seed=self.seeds[flr(rnd(#self.seeds))+1]
    create_plant(self.x+offset_x,self.y+offset_y,self.seed)
   end
  end
@@ -1089,6 +1092,10 @@ draw=function(self)
 end,
 
 animate=function(self)
+ if self.sp == nil then
+  del(enemies,self)
+  return
+ end
  self.t=(self.t+1)%self.s
  if (self.t==0) self.f=self.f%#self.sp+1
  self.sprite=self.sp[self.f]
