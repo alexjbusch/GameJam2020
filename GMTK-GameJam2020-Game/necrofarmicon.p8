@@ -413,7 +413,7 @@ speed=0.6,
 sprite=0,
 direction="right",
 item="sword",
-seed="carrot",
+seed="pumpkin",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
 dashing=false,
@@ -930,7 +930,7 @@ handle_corruption=function(self)
   if corruption_timer < 10 then
    corruption_timer+=delta_time
   else
-   create_enemy(self.x,self.y,self.class)
+   create_enemy(self.x,self.y,self.class,player)
    enemy:init()
    del(plants,self)
   end
@@ -998,49 +998,38 @@ end,
 update=function(self)
  if self.class == "pumpkin" then
   if self.state == "idle" then
-   --self.cur_moveanim = pumpkin_idle
-   self:animate()
-  end
-  if self.state == "idle" then
+   self.sp={130,131}
    if distance(player.x+4,player.y+4,self.x+4,self.y+4)
-    >= 9 then
+    >= 6 then
    self:move_toward_target()
-
+   self.sp = {146,147}
    else
     self.state ="attacking"
-    self:animate()
    end
   elseif self.state == "attacking" then
-   if self.attack_cooldown_timer < 1 then
-    self.attack_cooldown_timer+=delta_time
-   else
-    self.attack_cooldown_timer=0
-    if distance(player.x+4,player.y+4,self.x+4,self.y+4)
-    <= 9 then
-     player.hp-=1
-    end
-    self:animate()
-    self.state = "idle"
-   end
-  end
+   self.attack_cooldown_timer=0
+   create_explosion(self.x,self.y)
+   del(enemies,self)
+   player.hp-=3
+   --self.state = "idle"
+  end  --pumpkin
+
  elseif self.class == "lettuce" then
   if self.state == "idle" then
-   self:animate()
   end
-  self:stab_outwards()
+  self:stab_outwards() --lettuce
+
  elseif self.class == "carrot" then
   if self.state == "idle" then
-   self:animate()
   end
+
  elseif self.class == "lemon" then
   if self.state == "idle" then
    self:animate()
   end
   -- lemon explode logic here
  end
- -- if self.cur_moveanim != nil then
- --  self.sprite=self.cur_moveanim:anim_update()
- -- end
+ self:animate()
 end,
 
 draw=function(self)
@@ -1063,6 +1052,7 @@ move_toward_target=function(self)
 	 self.y+=self.dy*self.speed
  end
 end,
+
 stab_outwards=function(self)
  if self.state == "attacking" then
   self.cur_moveanim = lettuce_attack
