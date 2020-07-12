@@ -15,8 +15,10 @@ plants = {}
 enemies = {}
 items = {}
 runes={}
+explosions={}
 
-plant_grow_time=15 --seconds
+enemy_count =0
+plant_grow_time=1--15 --seconds
 plant_death_time=5--seconds
 delta_time = 1/60 --time since last frame
 --note that delta_time is 1/30
@@ -27,7 +29,7 @@ corr_seed_pos={x=15*8,y=15*8}
 corruption_range=2--tiles
 corruption_timer=0
 random_corruption_timer=0
-time_till_next_corruption = 5
+time_till_next_corruption = 1
 
 boundary_x =256
 boundary_y =256
@@ -63,10 +65,15 @@ function _update60()
    for b in all(plants) do
     b:update()
    end
+   enemy_count =0
    for b in all(enemies) do
     b:update()
+    enemy_count +=1
    end
    for b in all(items) do
+    b:update()
+   end
+   for b in all(explosions) do
     b:update()
    end
   end
@@ -96,6 +103,9 @@ function _draw()
    b:draw()
   end
   for b in all(enemies) do
+   b:draw()
+  end
+  for b in all(explosions) do
    b:draw()
   end
   player:draw()
@@ -197,6 +207,40 @@ end
 }
 add(runes,rune)
 return rune
+end
+
+--explosion code
+function generate_explosion_particles(xin,yin)
+explosion = {
+ x=63,
+ y=63,
+ speed = .5,
+ dx=(rnd(2)-1),
+ dy=(rnd(2)-1),
+ lifespan =rnd(40)-5,
+ draw=function(self)
+		pset(self.x,self.y,11)
+	end,
+	update=function(self)
+	 self.x+=self.dx*self.speed
+	 self.y+=self.dy*self.speed
+	 self.lifespan-=1
+	 if self.lifespan<0 then
+	  del(explosions,self)
+	 end
+	end
+}
+explosion.x = xin
+explosion.y = yin
+add(explosions,explosion)
+end
+
+function create_explosion(xin,yin)
+ particle_count = 0
+	while particle_count<100 do
+		  generate_explosion_particles(xin,yin)
+		  particle_count += 1
+	end
 end
 -->8
 --player
@@ -498,6 +542,7 @@ swing_sword=function(self)
  end
  if enemy != nil then
   del(enemies,enemy)
+  create_explosion(enemy.x,enemy.y)
  end
 end,
 
@@ -720,7 +765,6 @@ handle_corruption=function(self)
   == 77then --corrupted dirt
    if not self.corrupted then
     self.corrupted=true
-    --this line creates the rune
     self.rune = make_rune(self.x,self.y,self)
    end
  end
@@ -730,7 +774,6 @@ handle_corruption=function(self)
   else
    create_enemy(self.x,self.y,self.class)
    del(plants,self)
-   -- this is where i would delete the rune if i knew how
   end
  end
 end
