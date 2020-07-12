@@ -33,7 +33,7 @@ boundary_y =256
 function _init()
  --test code
  --mset(corr_seed_pos.x/8,corr_seed_pos.y/8,132)
- --create_enemy(75,55,"pumpkin",player)
+ create_enemy(75,55,"pumpkin",player)
  -- ui layer
  ui_layer = make_ui()
 
@@ -185,7 +185,7 @@ hp=10,
 speed=0.6,
 sprite=0,
 direction="right",
-item="watering_pail",
+item="sword",
 seed="pumpkin",
 harvested={lettuce=0,carrot=0,tomato=0,corn=0,melon=0,pumpkin=0,lemon=0},
 running=false,
@@ -339,7 +339,14 @@ swing_sword=function(self)
  if self.direction == "right" then
   enemy = hitbox_collision(self.x+8,self.y,8,8)
  elseif self.direction == "left" then
-  enemy = hitbox_collision(self.x,self.y,-8,8)
+  enemy = hitbox_collision(self.x-8,self.y,8,8)
+ elseif self.direction == "left" then
+  enemy = hitbox_collision(self.x,self.y+8,8,8)
+ elseif self.direction == "left" then
+  enemy = hitbox_collision(self.x,self.y-8,8,8)
+ end
+ if enemy != nil then
+  del(enemies,enemy)
  end
 end,
 
@@ -665,7 +672,7 @@ function collision(obj1,obj2)
   return hit
 end
 
-function hitbox_collision(px,py,hitbox_h,hitbox_w)
+function hitbox_collision(px,py,hitbox_w,hitbox_h)
  hitbox = {
   x=px,
   y=py,
@@ -675,12 +682,12 @@ function hitbox_collision(px,py,hitbox_h,hitbox_w)
  local colour = 1
  for e in all(enemies) do
   if collision(hitbox,e) then
-   colour = 7
-   --return e
+   --colour = 7
+   return e
   end
  end
-rect(px,py,px+hitbox_w,py+hitbox_h,colour)
- --return nil
+--rect(px,py,px+hitbox_w,py+hitbox_h,colour)
+ return nil
 end
 
 
